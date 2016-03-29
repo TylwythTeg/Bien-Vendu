@@ -55,6 +55,7 @@ void ViewAccounts();
 void BuildNewAccount();
 void EditMenu(string account);
 void EditAccounts();
+void CreateCashLog(string account);
 
 
 
@@ -228,7 +229,7 @@ void BuildNewAccount()
 		}
 		else
 		{
-			accountslist << NewAccount.GetAccountName();      //now saves in master list as Atherton,Ruthfield,John, etc instead of Atherton.txt
+			accountslist << NewAccount.GetAccountName() << ",";      //now saves in master list as Atherton,Ruthfield,John, etc instead of Atherton.txt
 			accountslist.close();
 			cout << "Master accounts list saved\n";
 		}
@@ -239,6 +240,8 @@ void EditMenu(string account)
 {
 	//Account Acnt = BuildAccountFromFile(account + ".txt");
 	ifstream logfile(account + ".CashLog");
+
+	//note: will want to detect no of machines and select from list of them
 
 	//check if CashLog file for account exists: Account.CashLog, eg "Atherton.CashLog"
 	if (logfile)
@@ -299,8 +302,68 @@ void EditMenu(string account)
 	else
 	{
 		//file does not exist, time to CREATE IT, WRITE IT BASED ON USER INPUT
-		cout << "There is currently no cash log file for " << account << endl;
+		cout << "There is currently no cash log file for " << account << "\nCreate one? Enter 'y' or 'n'\n";
+		char ch = ' ';
+		cin >> ch;
+
+		switch (ch)
+		{
+		case 'y': CreateCashLog(account);
+			break;
+		case 'n': return;
+			break;
+		default: cout << "Invalid Input\n";
+		}
+
+
 	}
+}
+
+void CreateCashLog(string account)
+{
+	//ofstream logfile(account + ".CashLog");
+	
+	//Account Acnt;
+	vector<CashLog>Log;
+
+	//will want to sort by date before saving to .cashlog file and printing results
+
+	string st = "";
+	double doub = 0.0;
+
+	cout << "Please enter the date and value for new entry in seperated by whitespace\n";
+	cout << "Format should look like MM/DD/YYYY ####.##:\n";
+	cout << "Enter '|' to terminate entry";
+	while (cin>>st>>doub) //terminate?
+	{
+		//cout << "Please enter the date for new entry as MM/DD/YYYY:\n";   //note: will have to detect invalid input
+		Log.push_back(CashLog(st));
+
+		//cout << "Please enter the number value of the dated entry as numbers, eg '134.35' \n";
+		Log[Log.size() - 1].SetValue(doub);
+
+	}
+
+
+	ofstream logfile(account + ".CashLog");
+	for (int i = 0; i < Log.size(); ++i)
+	{
+		//save and print
+
+		if (!logfile)
+		{
+			cout << "Error opening file\n" << endl;
+			//return; //return back to main
+		}
+		else
+		{
+			//Account Name, Number of Machines, etc
+			logfile << Log[i].GetDate() << " " << Log[i].GetValue() << ",";
+			cout << "Entry " << i << ": " << Log[i].GetDate() << " " << Log[i].GetValue() << " saved\n";
+		}
+	}
+	logfile.close();
+
 }
 
 void EditAccounts()			//reduce redundancy between EditAccounts() and ViewAccounts()?
@@ -314,7 +377,7 @@ void EditAccounts()			//reduce redundancy between EditAccounts() and ViewAccount
 		cout << accounts[i] << ": \n\t";
 	}
 
-	cout << "Type the name of an Account to Edit (Preserve capitalization:\n";
+	cout << "Type the name of an Account to Edit (Preserve capitalization):\n";
 	string st = "";
 
 	cin >> st;
