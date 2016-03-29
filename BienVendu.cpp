@@ -24,14 +24,18 @@ class Account
 		vector<double>cash;
 };
 
-void ViewAccounts()           //change function to LOAD accounts? Purpose.
+
+
+vector<string> LoadMasterAccountsList()				//Retrieve list of all accounts and store in vector
 {
-	//Parse and Load master accounts list
 	ifstream accountslist("Accounts.txt");
 
 	vector<string>accounts;
+
 	char letter;
 	string current_account = "";
+
+
 	for (int i = 0; !accountslist.eof(); i++)
 	{
 		accountslist.get(letter);
@@ -46,69 +50,81 @@ void ViewAccounts()           //change function to LOAD accounts? Purpose.
 			current_account = "";
 		}
 	}
+
 	accountslist.close();
 
+	return accounts;
+}
 
-	//list accounts Run through all accounts from accounts vector
-	cout << "\nAccounts List: ";
-	for (int i = 0; i < accounts.size(); i++)
+Account BuildAccountFromFile(string account_file)
+{
+	ifstream account(account_file); //open say atherton.txt  ifstream account("Atherton.txt");
+
+	if (!account)
 	{
-		cout << "\n" << accounts[i] << ": \n\t"; //will print say "Atherton.txt"                //note will print : once completed all accounts.txt
-		
-		//open accounts.txt file
-		//build class from txt file
-		//print attributes
+		cout << "Error opening file" << endl;
+		//return;
+	}
+	else
+	{
+		Account Acnt; //start building account class member from atherton.txt
 
-		ifstream account(accounts[i]); //open say atherton.txt  ifstream account("Atherton.txt");
-		if(!account)
+		char chrctr; //to store info from txt one character at a time
+		string current = ""; //string to store information between commas ','
+		int file_movement = 0; //keep track of where we are in the file, how many fields of data we have passed through and collected etc
+
+		for (int s = 0; !account.eof(); s++)
 		{
-			cout << "Error opening file" << endl;
-			return;
-		}
-		else
-		{
-			Account Acnt; //start building account class member from atherton.txt
+			account.get(chrctr);
 
-			char chrctr; //to store info from txt one character at a time
-			string current = ""; //string to store information between commas ','
-			int file_movement = 0; //keep track of where we are in the file, how many fields of data we have passed through and collected etc
-
-			for (int s = 0; !account.eof(); s++)
+			if (chrctr != ',') //if not comma keep building the current string to hold information from field
 			{
-				account.get(chrctr);
-
-				if (chrctr != ',') //if not comma keep building the current string to hold information from field
+				current += chrctr;
+			}
+			else				//if comma, end of field, use information to build class member accordingly
+			{
+				if (file_movement == 0)
 				{
-					current += chrctr;
+					Acnt.SetAccountName(current);
+					//cout << accounts[i] << " name set as " << Acnt.GetAccountName();
+					current = ""; //reset current string to null
+					file_movement++;
 				}
-				else				//if comma, end of field, use information to build class member accordingly
+				else if (file_movement == 1)
 				{
-					if (file_movement == 0)
-					{
-						Acnt.SetAccountName(current);
-						cout << accounts[i] << " name set as " << Acnt.GetAccountName();
-						current = ""; //reset current string to null
-						file_movement++;
-					}
-					else if (file_movement == 1)
-					{
-						Acnt.SetNumOfMachines(atoi(current.c_str()));
-						file_movement--; //since last field right now set back to our starting point 0
-
-						cout << "\n\t" << Acnt.GetAccountName() << " has " << Acnt.GetNumOfMachines() << " machines\n";
-						current = ""; //reset current string to null
-						account.close();
-						break;
-					}
+					Acnt.SetNumOfMachines(atoi(current.c_str()));
+					file_movement--; //since last field right now set back to our starting point 0
+					//cout << "\n\t" << Acnt.GetAccountName() << " has " << Acnt.GetNumOfMachines() << " machines\n";
+					current = ""; //reset current string to null
+					account.close();
+					//break;
+					return Acnt;
 				}
 			}
 		}
 	}
 }
 
+
+void ViewAccounts()
+{
+	//list of all accounts.txt
+	vector<string>accounts = LoadMasterAccountsList();						
+
+	//Run through all accounts from master list
+	cout << "\nAccounts List: ";
+
+	for (int i = 0; i < accounts.size(); i++)
+	{
+		cout << "\n" << accounts[i] << ": \n\t"; //will print say "Atherton.txt"......note will print : once completed all accounts.txt
+		Account Acnt = BuildAccountFromFile(accounts[i]);  //Build account from .txt...for instance one loop pass through will build Atherton from Atherton.txt
+		cout << "\n\t" << Acnt.GetAccountName() << " has " << Acnt.GetNumOfMachines() << " machines\n";
+	}
+}
+
 void BuildNewAccount()
 {
-	//Name the account
+	//Name the account, eg "Atherton"
 	cout << "\tEnter a name for the new account\n";
 	string st;
 	cin >> st;
@@ -124,7 +140,7 @@ void BuildNewAccount()
 	NewAccount.SetNumOfMachines(n);
 	cout << "Number of machines for " << NewAccount.GetAccountName() << " is " << NewAccount.GetNumOfMachines() << endl;
 
-	//Write account information to .txt file
+	//Write account information to .txt file, eg "Atherton.txt"
 	ofstream writer(NewAccount.GetAccountName() + ".txt");
 
 	if (!writer)
