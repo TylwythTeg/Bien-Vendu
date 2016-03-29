@@ -24,9 +24,73 @@ class Account
 		vector<double>cash;
 };
 
+class CashLog
+{
+	public:
+		CashLog(string str)
+			:Date(str) {}
+		CashLog(string str, double val)
+			:Date(str), Value(val) {}
+		~CashLog() {}
+		
+
+	//Member Methods
+	string GetDate() { return Date; }
+	void SetDate(string st) { Date = st; }
+
+	double GetValue() { return Value; }
+	void SetValue(double n) { Value = n; }
+
+	private:
+		string Date;
+		double Value;
+
+};
 
 
-vector<string> LoadMasterAccountsList()				//Retrieve list of all accounts and store in vector
+//functions
+vector<string> LoadMasterAccountsList();
+Account BuildAccountFromFile(string account_file);
+void ViewAccounts();
+void BuildNewAccount();
+void EditMenu(string account);
+void EditAccounts();
+
+
+
+
+int main()
+{
+	cout << "Welcome to Bien Vendu";
+	cout << "\n\nEnter a number to select an option: ";
+	cout << "\n\t1. View Accounts\n\t2. Create New Account\n\t3. Edit Accounts\n";
+
+	char n = '0';
+	cin >> n;
+
+	switch (n)
+	{
+		case '1': ViewAccounts();
+			break;
+		case '2': BuildNewAccount();
+			break;
+		case '3': EditAccounts();
+			break;
+		default: cout << "Invalid Input\n";
+	}
+	
+	cout << "Back To Main\n";
+
+
+
+	system("PAUSE");
+
+
+
+	return 0;
+}
+
+vector<string> LoadMasterAccountsList()				//Retrieve list of all accounts from master file and store in vector
 {
 	ifstream accountslist("Accounts.txt");
 
@@ -94,7 +158,7 @@ Account BuildAccountFromFile(string account_file)
 				{
 					Acnt.SetNumOfMachines(atoi(current.c_str()));
 					file_movement--; //since last field right now set back to our starting point 0
-					//cout << "\n\t" << Acnt.GetAccountName() << " has " << Acnt.GetNumOfMachines() << " machines\n";
+									 //cout << "\n\t" << Acnt.GetAccountName() << " has " << Acnt.GetNumOfMachines() << " machines\n";
 					current = ""; //reset current string to null
 					account.close();
 					//break;
@@ -109,15 +173,15 @@ Account BuildAccountFromFile(string account_file)
 void ViewAccounts()
 {
 	//list of all accounts.txt
-	vector<string>accounts = LoadMasterAccountsList();						
+	vector<string>accounts = LoadMasterAccountsList();
 
 	//Run through all accounts from master list
 	cout << "\nAccounts List: ";
 
 	for (int i = 0; i < accounts.size(); i++)
 	{
-		cout << "\n" << accounts[i] << ": \n\t"; //will print say "Atherton.txt"......note will print : once completed all accounts.txt
-		Account Acnt = BuildAccountFromFile(accounts[i]);  //Build account from .txt...for instance one loop pass through will build Atherton from Atherton.txt
+		cout << "\n" << accounts[i] << ": \n\t"; //will print say "Atherton"......note will print : once completed all accounts.txt
+		Account Acnt = BuildAccountFromFile(accounts[i] + ".txt");  //Build account from .txt...for instance one loop pass through will build Atherton from Atherton.txt
 		cout << "\n\t" << Acnt.GetAccountName() << " has " << Acnt.GetNumOfMachines() << " machines\n";
 	}
 }
@@ -164,38 +228,103 @@ void BuildNewAccount()
 		}
 		else
 		{
-			accountslist << NewAccount.GetAccountName() << ".txt,";
+			accountslist << NewAccount.GetAccountName();      //now saves in master list as Atherton,Ruthfield,John, etc instead of Atherton.txt
 			accountslist.close();
 			cout << "Master accounts list saved\n";
 		}
 	}
 }
 
-int main()
+void EditMenu(string account)
 {
-	cout << "Welcome to Bien Vendu";
-	cout << "\n\nEnter a number to select an option: ";
-	cout << "\n\t1. View Accounts\n\t2. Create New Account\n";
+	//Account Acnt = BuildAccountFromFile(account + ".txt");
+	ifstream logfile(account + ".CashLog");
 
-	char n = '0';
-	cin >> n;
-
-	switch (n)
+	//check if CashLog file for account exists: Account.CashLog, eg "Atherton.CashLog"
+	if (logfile)
 	{
-		case '1': ViewAccounts();
-			break;
-		case '2': BuildNewAccount();
-			break;
-		default: cout << "Invalid Input\n";
+		//file already exists, READ IT
+
+		vector<CashLog>Log;
+		char chrctr; //to store info from txt one character at a time
+		string current = ""; //string to store information between commas ','
+		int field_movement = 0;  //how many data fields have we accumulated up to this point?
+
+		for (int s = 0; !logfile.eof(); ++s)				//ParseText function? GetField?
+		{
+			logfile.get(chrctr);
+
+			if (logfile.eof())
+				break;
+
+			if (field_movement == 4)
+				cout << field_movement << field_movement;
+
+			if (chrctr != ',') //if not comma, we are data collecting
+			{
+				if (chrctr == ' ') //but if whitespace then that means date is done collecting, so set date and reset current string
+				{
+					//date done collecting
+					//Log[s].SetDate(current); push back log and set date
+					Log.push_back(CashLog(current));
+					current = "";
+				}
+				else                //not whitespace so keep building current string
+				{
+					current += chrctr;
+				}
+			}
+			else if (chrctr == ',')                 //comma, ascertain that we have logged date and may now log value
+			{
+				//end of field, store current value in created Latest Log entry
+				double doub;
+				stringstream ss; //convert string to double
+				ss << current;
+				ss >> doub;
+				Log[field_movement].SetValue(doub);
+				current = "";
+				field_movement++;
+			}
+		}
+
+		logfile.close();
+
+		for (int s = 0; s<Log.size(); s++)				//print all cashlog entries for account
+		{
+			cout << "\nEntry " << s << ": " << Log[s].GetDate() << " : $" << Log[s].GetValue();
+		}
+
+
 	}
-	
-	cout << "Back To Main\n";
+	else
+	{
+		//file does not exist, time to CREATE IT, WRITE IT BASED ON USER INPUT
+		cout << "There is currently no cash log file for " << account << endl;
+	}
+}
 
+void EditAccounts()			//reduce redundancy between EditAccounts() and ViewAccounts()?
+{
+	//list of all accounts.txt
+	cout << "Accounts: \n";
+	vector<string>accounts = LoadMasterAccountsList();
 
+	for (int i = 0; i < accounts.size(); i++)
+	{
+		cout << accounts[i] << ": \n\t";
+	}
 
-	system("PAUSE");
+	cout << "Type the name of an Account to Edit (Preserve capitalization:\n";
+	string st = "";
 
+	cin >> st;
 
-
-	return 0;
+	for (int i = 0; i < accounts.size(); i++)
+	{
+		if (accounts[i] == st)
+		{
+			EditMenu(accounts[i]);
+			break;
+		}
+	}
 }
