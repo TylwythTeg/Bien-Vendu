@@ -4,6 +4,8 @@
 
 using namespace std;
 
+const string MSTR_ACNT_LIST = "Accounts.txt";
+
 class Account
 {
 	public:
@@ -47,24 +49,23 @@ class CashLog
 
 };
 
-
-//functions
-vector<string> LoadMasterAccountsList();
+//declare functions
+vector<string> ParseFile(string file);
 Account BuildAccountFromFile(string account_file);
 void ViewAccounts();
 void BuildNewAccount();
 void EditMenu(string account);
 void EditAccounts();
 void CreateCashLog(string account);
-
-
+void WriteAcntFile(Account Acnt, bool isNew);
+void WriteAcntFile(string account, vector<CashLog>Log, bool isNew);
 
 
 int main()
 {
-	cout << "Welcome to Bien Vendu";
-	cout << "\n\nEnter a number to select an option: ";
-	cout << "\n\t1. View Accounts\n\t2. Create New Account\n\t3. Edit Accounts\n";
+	cout << "Welcome to Bien Vendu\n";
+	cout << "Enter a number to select an option: \n";
+	cout << "\t1. View Accounts\n\t2. Create New Account\n\t3. Edit Accounts\n";
 
 	char n = '0';
 	cin >> n;
@@ -80,7 +81,7 @@ int main()
 		default: cout << "Invalid Input\n";
 	}
 	
-	cout << "Back To Main\n";
+	cout << "\nBack To Main\n\n";
 
 
 
@@ -91,101 +92,62 @@ int main()
 	return 0;
 }
 
-vector<string> LoadMasterAccountsList()				//Retrieve list of all accounts from master file and store in vector
+void ViewAccounts()
 {
-	ifstream accountslist("Accounts.txt");
-
-	vector<string>accounts;
-
-	char letter;
-	string current_account = "";
-
-
-	for (int i = 0; !accountslist.eof(); i++)
+	//Retrieve list of all accounts from master list
+	vector<string>accounts = ParseFile(MSTR_ACNT_LIST);
+	//system("PAUSE");
+	//Run through build and print all accounts from list
+	cout << "\nAccounts List: \n\n";
+	//system("PAUSE");
+	for (int i = 0; i < accounts.size(); ++i)
 	{
-		accountslist.get(letter);
-
-		if (letter != ',')
-		{
-			current_account += letter;
-		}
-		else
-		{
-			accounts.push_back(current_account);
-			current_account = "";
-		}
+		//system("PAUSE");
+		Account Acnt = BuildAccountFromFile(accounts[i] + ".txt");  //Build account from .txt...for instance one loop pass through will build Atherton from Atherton.txt
+		cout << "\t" << Acnt.GetAccountName() << " has " << Acnt.GetNumOfMachines() << " machines\n";
 	}
+}
 
-	accountslist.close();
+vector<string> ParseFile(string file)
+{
+	ifstream filestream(file);
 
-	return accounts;
+	if (!filestream)
+	{
+		cout << "Can't open " << file << endl;
+	}
+	else
+	{
+		vector<string>Fields;
+		string st;
+
+		for (int i = 0; !filestream.eof(); ++i)
+		{
+			getline(filestream, st);
+
+			if (filestream.eof()) 
+				break;
+			Fields.push_back(st);
+		}
+
+		filestream.close();
+		return Fields;
+	}
+	
 }
 
 Account BuildAccountFromFile(string account_file)
 {
-	ifstream account(account_file); //open say atherton.txt  ifstream account("Atherton.txt");
+	Vector<string>Fields = ParseFile(account_file);
 
-	if (!account)
-	{
-		cout << "Error opening file" << endl;
-		//return;
-	}
-	else
-	{
-		Account Acnt; //start building account class member from atherton.txt
+	//cout << "Fields[0] " << Fields[0] << " Fields [1] " << Fields[1] << endl;
 
-		char chrctr; //to store info from txt one character at a time
-		string current = ""; //string to store information between commas ','
-		int file_movement = 0; //keep track of where we are in the file, how many fields of data we have passed through and collected etc
-
-		for (int s = 0; !account.eof(); s++)
-		{
-			account.get(chrctr);
-
-			if (chrctr != ',') //if not comma keep building the current string to hold information from field
-			{
-				current += chrctr;
-			}
-			else				//if comma, end of field, use information to build class member accordingly
-			{
-				if (file_movement == 0)
-				{
-					Acnt.SetAccountName(current);
-					//cout << accounts[i] << " name set as " << Acnt.GetAccountName();
-					current = ""; //reset current string to null
-					file_movement++;
-				}
-				else if (file_movement == 1)
-				{
-					Acnt.SetNumOfMachines(atoi(current.c_str()));
-					file_movement--; //since last field right now set back to our starting point 0
-									 //cout << "\n\t" << Acnt.GetAccountName() << " has " << Acnt.GetNumOfMachines() << " machines\n";
-					current = ""; //reset current string to null
-					account.close();
-					//break;
-					return Acnt;
-				}
-			}
-		}
-	}
+	Account Acnt;
+	Acnt.SetAccountName(Fields[0]);
+	Acnt.SetNumOfMachines(atoi(Fields[1].c_str()));
+	return Acnt;
 }
 
-
-void ViewAccounts()
-{
-	//list of all accounts.txt
-	vector<string>accounts = LoadMasterAccountsList();
-
-	//Run through all accounts from master list
-	cout << "\nAccounts List: ";
-
-	for (int i = 0; i < accounts.size(); i++)
-	{
-		cout << "\n" << accounts[i] << ": \n\t"; //will print say "Atherton"......note will print : once completed all accounts.txt
-		Account Acnt = BuildAccountFromFile(accounts[i] + ".txt");  //Build account from .txt...for instance one loop pass through will build Atherton from Atherton.txt
-		cout << "\n\t" << Acnt.GetAccountName() << " has " << Acnt.GetNumOfMachines() << " machines\n";
-	}
-}
 
 void BuildNewAccount()
 {
@@ -205,103 +167,32 @@ void BuildNewAccount()
 	NewAccount.SetNumOfMachines(n);
 	cout << "Number of machines for " << NewAccount.GetAccountName() << " is " << NewAccount.GetNumOfMachines() << endl;
 
-	//Write account information to .txt file, eg "Atherton.txt"
-	ofstream writer(NewAccount.GetAccountName() + ".txt");
-
-	if (!writer)
-	{
-		cout << "Error opening file\n" << endl;
-		//return; //return back to main
-	}
-	else
-	{
-		//Account Name, Number of Machines, etc
-		writer << NewAccount.GetAccountName() << "," << NewAccount.GetNumOfMachines() << ",";
-		writer.close();
-		cout << NewAccount.GetAccountName() << " saved\n";
-
-		//Write to Master Accounts list
-		ofstream accountslist("Accounts.txt", ios::app);
-		if (!writer)
-		{
-			cout << "Error opening file" << endl;
-			return;
-		}
-		else
-		{
-			accountslist << NewAccount.GetAccountName() << ",";      //now saves in master list as Atherton,Ruthfield,John, etc instead of Atherton.txt
-			accountslist.close();
-			cout << "Master accounts list saved\n";
-		}
-	}
+	//Write to new account.txt file
+	WriteAcntFile(NewAccount,true);			//true means new account
 }
 
 void EditMenu(string account)
 {
-	//Account Acnt = BuildAccountFromFile(account + ".txt");
+	//vector<string>Fields = ParseFile(account + ".CashLog");
+
 	ifstream logfile(account + ".CashLog");
-
-	//note: will want to detect no of machines and select from list of them
-
-	//check if CashLog file for account exists: Account.CashLog, eg "Atherton.CashLog"
-	if (logfile)
+	if (logfile)	//file already exists, we must read it
 	{
-		//file already exists, READ IT
-
-		vector<CashLog>Log;
-		char chrctr; //to store info from txt one character at a time
-		string current = ""; //string to store information between commas ','
-		int field_movement = 0;  //how many data fields have we accumulated up to this point?
-
-		for (int s = 0; !logfile.eof(); ++s)				//ParseText function? GetField?
-		{
-			logfile.get(chrctr);
-
-			if (logfile.eof())
-				break;
-
-			if (field_movement == 4)
-				cout << field_movement << field_movement;
-
-			if (chrctr != ',') //if not comma, we are data collecting
-			{
-				if (chrctr == ' ') //but if whitespace then that means date is done collecting, so set date and reset current string
-				{
-					//date done collecting
-					//Log[s].SetDate(current); push back log and set date
-					Log.push_back(CashLog(current));
-					current = "";
-				}
-				else                //not whitespace so keep building current string
-				{
-					current += chrctr;
-				}
-			}
-			else if (chrctr == ',')                 //comma, ascertain that we have logged date and may now log value
-			{
-				//end of field, store current value in created Latest Log entry
-				double doub;
-				stringstream ss; //convert string to double
-				ss << current;
-				ss >> doub;
-				Log[field_movement].SetValue(doub);
-				current = "";
-				field_movement++;
-			}
-		}
-
 		logfile.close();
 
-		for (int s = 0; s<Log.size(); s++)				//print all cashlog entries for account
+		//create vector of fields, eg Fields[i] = 07/24/2015 132.50
+		vector<string>Fields = ParseFile(account + ".CashLog");
+
+		//print entries
+		for (int i = 0; i < Fields.size(); ++i)
 		{
-			cout << "\nEntry " << s << ": " << Log[s].GetDate() << " : $" << Log[s].GetValue();
+			cout << "Entry [" << i << "]: " << Fields[i] << endl;
 		}
 
-
+		//New functionality: ask to add new Entries
 	}
-	else
+	else  //File doesn't exist, we must create based on user input
 	{
-		//file does not exist, time to CREATE IT, WRITE IT BASED ON USER INPUT
 		cout << "There is currently no cash log file for " << account << "\nCreate one? Enter 'y' or 'n'\n";
 		char ch = ' ';
 		cin >> ch;
@@ -314,16 +205,11 @@ void EditMenu(string account)
 			break;
 		default: cout << "Invalid Input\n";
 		}
-
-
 	}
 }
 
 void CreateCashLog(string account)
 {
-	//ofstream logfile(account + ".CashLog");
-	
-	//Account Acnt;
 	vector<CashLog>Log;
 
 	//will want to sort by date before saving to .cashlog file and printing results
@@ -333,7 +219,7 @@ void CreateCashLog(string account)
 
 	cout << "Please enter the date and value for new entry in seperated by whitespace\n";
 	cout << "Format should look like MM/DD/YYYY ####.##:\n";
-	cout << "Enter '|' to terminate entry";
+	cout << "Enter '|' twice to stop adding entries and save\n";
 	while (cin>>st>>doub) //terminate?
 	{
 		//cout << "Please enter the date for new entry as MM/DD/YYYY:\n";   //note: will have to detect invalid input
@@ -345,7 +231,41 @@ void CreateCashLog(string account)
 	}
 
 
+	WriteAcntFile(account, Log, true);
+}
+
+void EditAccounts()			//reduce redundancy between EditAccounts() and ViewAccounts()?
+{
+	//list of all accounts.txt
+	cout << "Accounts: \n";
+	vector<string>accounts = ParseFile(MSTR_ACNT_LIST);
+
+	for (int i = 0; i < accounts.size(); i++)
+	{
+		cout << accounts[i] << ": \n\t";
+	}
+
+	cout << "Type the name of an Account to Edit (Preserve Capitalization):\n";
+	string st = "";
+
+	cin >> st;
+
+	for (int i = 0; i < accounts.size(); i++)
+	{
+		if (accounts[i] == st)
+		{
+			EditMenu(accounts[i]);
+			break;
+		}
+	}
+}
+
+void WriteAcntFile(string account, vector<CashLog>Log, bool isNew)  //For CashLog files, will want to add options append? or completely rewrite each time?
+{
+	//right now isNew always true (always writing a new cashlog)
+
 	ofstream logfile(account + ".CashLog");
+
 	for (int i = 0; i < Log.size(); ++i)
 	{
 		//save and print
@@ -358,36 +278,46 @@ void CreateCashLog(string account)
 		else
 		{
 			//Account Name, Number of Machines, etc
-			logfile << Log[i].GetDate() << " " << Log[i].GetValue() << ",";
+			logfile << Log[i].GetDate() << " " << Log[i].GetValue() << "\n";
 			cout << "Entry " << i << ": " << Log[i].GetDate() << " " << Log[i].GetValue() << " saved\n";
 		}
 	}
 	logfile.close();
-
 }
 
-void EditAccounts()			//reduce redundancy between EditAccounts() and ViewAccounts()?
+
+void WriteAcntFile(Account Acnt, bool isNew)		//For AnctFiles, will want to add options append? or completely rewrite?
 {
-	//list of all accounts.txt
-	cout << "Accounts: \n";
-	vector<string>accounts = LoadMasterAccountsList();
+	ofstream writer(Acnt.GetAccountName() + ".txt");
 
-	for (int i = 0; i < accounts.size(); i++)
+	if (!writer)
 	{
-		cout << accounts[i] << ": \n\t";
+		cout << "Error opening file\n" << endl;
+		//return; //return back to main
 	}
-
-	cout << "Type the name of an Account to Edit (Preserve capitalization):\n";
-	string st = "";
-
-	cin >> st;
-
-	for (int i = 0; i < accounts.size(); i++)
+	else
 	{
-		if (accounts[i] == st)
+		//Account Name, Number of Machines, etc
+		writer << Acnt.GetAccountName() << "\n" << Acnt.GetNumOfMachines() << "\n";
+		writer.close();
+		cout << Acnt.GetAccountName() << " saved\n";
+
+
+		if (isNew)  //if new account append to master list
 		{
-			EditMenu(accounts[i]);
-			break;
+			//Add to Master Accounts list
+			ofstream accountslist(MSTR_ACNT_LIST, ios::app);
+			if (!writer)
+			{
+				cout << "Error opening file" << endl;
+				return;
+			}
+			else
+			{
+				accountslist << Acnt.GetAccountName() << "\n";      //now saves in master list as Atherton\nRuthfield\nJohn, etc instead of Atherton.txt
+				accountslist.close();
+				cout << "Master accounts list saved\n";
+			}
 		}
 	}
 }
