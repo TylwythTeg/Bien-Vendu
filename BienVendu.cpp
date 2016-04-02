@@ -184,6 +184,10 @@ void BuildNewAccount()
 	cout << "\tEnter the amount of machines this account has\n";
 	int n;
 	cin >> n;
+
+	if (cin.eof()) //if ctrl+z entered return to main menu
+		return;
+
 	NewAccount.SetNumOfMachines(n);
 	cout << "Number of machines for " << NewAccount.GetAccountName() << " is " << NewAccount.GetNumOfMachines() << endl;
 
