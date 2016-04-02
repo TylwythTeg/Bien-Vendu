@@ -66,22 +66,33 @@ int main()
 	cout << "Welcome to Bien Vendu\n";
 	cout << "Enter a number to select an option: \n";
 	cout << "\t1. View Accounts\n\t2. Create New Account\n\t3. Edit Accounts\n";
+	//Will want to merge View/Edit Accounts, no real reason to be seperate
 
 	char n = '0';
-	cin >> n;
+	//cin >> n;
 
-	switch (n)
-	{
-		case '1': ViewAccounts();
-			break;
-		case '2': BuildNewAccount();
-			break;
-		case '3': EditAccounts();
-			break;
-		default: cout << "Invalid Input\n";
+	while(cin>>n)	//main menu input loop
+	{ 
+		//cout << "Enter a number to select an option: \n";
+		//cout << "\t1. View Accounts\n\t2. Create New Account\n\t3. Edit Accounts\n";
+
+		switch (n)
+		{
+			case '1': ViewAccounts();
+				break;
+			case '2': BuildNewAccount();
+				break;
+			case '3': EditAccounts();
+				break;
+			default: cout << "Invalid Input. Try again\n";
+		}
+
+		//So typing something like '42' won't have the program respond with default case followed by case '2'
+		cin.clear();
+		cin.ignore();
 	}
 	
-	cout << "\nBack To Main\n\n";
+	cout << "\nOutside Main Menu\n\n";
 
 
 
@@ -96,16 +107,17 @@ void ViewAccounts()
 {
 	//Retrieve list of all accounts from master list
 	vector<string>accounts = ParseFile(MSTR_ACNT_LIST);
-	//system("PAUSE");
+
 	//Run through build and print all accounts from list
 	cout << "\nAccounts List: \n\n";
-	//system("PAUSE");
+
 	for (int i = 0; i < accounts.size(); ++i)
 	{
-		//system("PAUSE");
 		Account Acnt = BuildAccountFromFile(accounts[i] + ".txt");  //Build account from .txt...for instance one loop pass through will build Atherton from Atherton.txt
 		cout << "\t" << Acnt.GetAccountName() << " has " << Acnt.GetNumOfMachines() << " machines\n";
 	}
+
+	return;
 }
 
 vector<string> ParseFile(string file)
@@ -140,8 +152,6 @@ Account BuildAccountFromFile(string account_file)
 {
 	Vector<string>Fields = ParseFile(account_file);
 
-	//cout << "Fields[0] " << Fields[0] << " Fields [1] " << Fields[1] << endl;
-
 	Account Acnt;
 	Acnt.SetAccountName(Fields[0]);
 	Acnt.SetNumOfMachines(atoi(Fields[1].c_str()));
@@ -153,8 +163,12 @@ void BuildNewAccount()
 {
 	//Name the account, eg "Atherton"
 	cout << "\tEnter a name for the new account\n";
+
 	string st;
 	cin >> st;
+
+	if (cin.eof()) //if ctrl+z entered return to main menu
+		return;
 
 	Account NewAccount;
 	NewAccount.SetAccountName(st);
@@ -173,8 +187,6 @@ void BuildNewAccount()
 
 void EditMenu(string account)
 {
-	//vector<string>Fields = ParseFile(account + ".CashLog");
-
 	ifstream logfile(account + ".CashLog");
 	if (logfile)	//file already exists, we must read it
 	{
@@ -248,15 +260,27 @@ void EditAccounts()			//reduce redundancy between EditAccounts() and ViewAccount
 	cout << "Type the name of an Account to Edit (Preserve Capitalization):\n";
 	string st = "";
 
-	cin >> st;
+	bool validAccount = false;
 
-	for (int i = 0; i < accounts.size(); i++)
+	while (!validAccount)	//input validation loop
 	{
-		if (accounts[i] == st)
+		cin >> st;
+
+		for (int i = 0; i < accounts.size(); i++)
 		{
-			EditMenu(accounts[i]);
-			break;
+			if (accounts[i] == st)	//input matches an Account, continue
+			{
+				EditMenu(accounts[i]);
+				validAccount = true;
+				break;
+			}
 		}
+
+		if (!validAccount)
+			cout << "No such account '" << st << "' found. Try Again\n";
+
+		cin.clear();
+		cin.ignore();
 	}
 }
 
@@ -266,27 +290,36 @@ void WriteAcntFile(string account, vector<CashLog>Log, bool isNew)  //For CashLo
 
 	ofstream logfile(account + ".CashLog");
 
-	for (int i = 0; i < Log.size(); ++i)
-	{
-		//save and print
 
-		if (!logfile)
-		{
-			cout << "Error opening file\n" << endl;
-			//return; //return back to main
-		}
-		else
-		{
-			//Account Name, Number of Machines, etc
-			logfile << Log[i].GetDate() << " " << Log[i].GetValue() << "\n";
-			cout << "Entry " << i << ": " << Log[i].GetDate() << " " << Log[i].GetValue() << " saved\n";
-		}
+	if (!logfile)
+	{
+		cout << "Error opening file\n" << endl;
+		//return; //return back to main
 	}
-	logfile.close();
+	else
+	{ 
+		for (int i = 0; i < Log.size(); ++i)
+		{
+			//save and print
+
+			if (!logfile)
+			{
+				cout << "Error opening file\n" << endl;
+				//return; //return back to main
+			}
+			else
+			{
+				//Account Name, Number of Machines, etc
+				logfile << Log[i].GetDate() << " " << Log[i].GetValue() << "\n";
+				cout << "Entry " << i << ": " << Log[i].GetDate() << " " << Log[i].GetValue() << " saved\n";
+			}
+		}
+		logfile.close();
+	}
 }
 
 
-void WriteAcntFile(Account Acnt, bool isNew)		//For AnctFiles, will want to add options append? or completely rewrite?
+void WriteAcntFile(Account Acnt, bool isNew)		//For Anct txt Files, will want to add options append? or completely rewrite each time?
 {
 	ofstream writer(Acnt.GetAccountName() + ".txt");
 
