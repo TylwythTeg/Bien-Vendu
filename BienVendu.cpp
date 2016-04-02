@@ -244,7 +244,7 @@ void CreateCashLog(string account)
 
 	cout << "Please enter the date and value for new entry in seperated by whitespace\n";
 	cout << "Format should look like MM/DD/YYYY ####.##:\n";
-	cout << "Enter '|' twice to stop adding entries and save\n";
+	cout << "Enter '|' twice to stop adding entries and save or Ctrl+Z to exit to main menu without saving\n";
 	while (cin>>st>>doub) //terminate?
 	{
 		//cout << "Please enter the date for new entry as MM/DD/YYYY:\n";   //note: will have to detect invalid input
@@ -252,9 +252,10 @@ void CreateCashLog(string account)
 
 		//cout << "Please enter the number value of the dated entry as numbers, eg '134.35' \n";
 		Log[Log.size() - 1].SetValue(doub);
-
 	}
 
+	if (cin.eof())
+		return;
 
 	WriteAcntFile(account, Log, true);
 }
