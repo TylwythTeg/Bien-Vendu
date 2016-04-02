@@ -65,7 +65,7 @@ int main()
 {
 	cout << "Welcome to Bien Vendu\n";
 
-	const string MAIN_PROMPT = "Enter a number to select an option: \n\t1. View Accounts\n\t2. Create New Account\n\t3. Edit Accounts\n";
+	const string MAIN_PROMPT = "Enter a number to select an option: \n\t1. View Accounts\n\t2. Create New Account\n\t3. Edit Accounts\nCtrl - Z to exit program\n";
 	cout << MAIN_PROMPT;
 	//Will want to merge View/Edit Accounts, no real reason to be seperate
 
@@ -254,8 +254,34 @@ void CreateCashLog(string account)
 		Log[Log.size() - 1].SetValue(doub);
 	}
 
+	if (!(cin >> st >> doub))  //if input does not follow format 'string double' then leave, ask to save or not
+	{
+		cin.clear();
+		cin.ignore();
+
+		cout << "Invalid Input. Reverting back to main menu. Save valid entries so far? 'y' or 'n'\n";
+		char ch = ' ';
+		cin >> ch;
+
+		switch (ch)
+		{
+			case 'y': //yes, go ahead and write
+				if (Log.empty())	return;			//if Log vector is empty there is NOTHING TO WRITE, IGNORE USER AND RETURN TO MAIN MENU
+				break;
+			case 'n': return;
+				break;
+			default: cout << "Reverting without saving\n";	return;
+		}
+
+		//return;
+	}
+
 	if (cin.eof())
+	{
+		cout << "End" << endl;
 		return;
+	}
+		
 
 	WriteAcntFile(account, Log, true);
 }
