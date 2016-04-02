@@ -64,8 +64,9 @@ void WriteAcntFile(string account, vector<CashLog>Log, bool isNew);
 int main()
 {
 	cout << "Welcome to Bien Vendu\n";
-	cout << "Enter a number to select an option: \n";
-	cout << "\t1. View Accounts\n\t2. Create New Account\n\t3. Edit Accounts\n";
+
+	const string MAIN_PROMPT = "Enter a number to select an option: \n\t1. View Accounts\n\t2. Create New Account\n\t3. Edit Accounts\n";
+	cout << MAIN_PROMPT;
 	//Will want to merge View/Edit Accounts, no real reason to be seperate
 
 	char n = '0';
@@ -79,17 +80,20 @@ int main()
 		switch (n)
 		{
 			case '1': ViewAccounts();
+				cout << MAIN_PROMPT;
 				break;
 			case '2': BuildNewAccount();
+				cout << MAIN_PROMPT;
 				break;
 			case '3': EditAccounts();
+				cout << MAIN_PROMPT;
 				break;
 			default: cout << "Invalid Input. Try again\n";
 		}
 
 		//So typing something like '42' won't have the program respond with default case followed by case '2'
 		cin.clear();
-		cin.ignore();
+		//cin.ignore();
 	}
 	
 	cout << "\nOutside Main Menu\n\n";
@@ -116,6 +120,8 @@ void ViewAccounts()
 		Account Acnt = BuildAccountFromFile(accounts[i] + ".txt");  //Build account from .txt...for instance one loop pass through will build Atherton from Atherton.txt
 		cout << "\t" << Acnt.GetAccountName() << " has " << Acnt.GetNumOfMachines() << " machines\n";
 	}
+
+	cout << endl;
 
 	return;
 }
@@ -248,6 +254,10 @@ void CreateCashLog(string account)
 
 void EditAccounts()			//reduce redundancy between EditAccounts() and ViewAccounts()?
 {
+
+	cin.clear();
+	cin.ignore();
+
 	//list of all accounts.txt
 	cout << "Accounts: \n";
 	vector<string>accounts = ParseFile(MSTR_ACNT_LIST);
@@ -276,11 +286,16 @@ void EditAccounts()			//reduce redundancy between EditAccounts() and ViewAccount
 			}
 		}
 
-		if (!validAccount)
+		if (!validAccount && !(cin.eof()))	//if no valid account and user didn't input ctrl+z then ask keep asking
+		{
 			cout << "No such account '" << st << "' found. Try Again\n";
-
-		cin.clear();
-		cin.ignore();
+		}
+		else if (!validAccount && cin.eof())	//if user input ctrl+z return back to main menu
+		{
+			cin.clear();
+			//cin.ignore();
+			return;
+		}
 	}
 }
 
