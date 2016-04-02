@@ -227,6 +227,9 @@ void EditMenu(string account)
 			break;
 		default: cout << "Invalid Input\n";
 		}
+
+		if (cin.eof()) //if ctrl+z entered return to main menu
+			return;
 	}
 }
 
