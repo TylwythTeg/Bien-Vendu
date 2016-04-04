@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "std_lib_facilities.h"
 #include <iostream>
+#include <cstdlib>
 
 using namespace std;
 
@@ -26,26 +27,92 @@ class Account
 		vector<double>cash;
 };
 
+
+enum Month { jan = 1, feb, mar, apr, may, jun, jul, aug, sept, oct, nov, dec };
+
+Month int_to_month(int x)
+{
+	if (x<Month::jan || x>Month::dec)
+		error("bad month");		//throw?
+	return Month(x);
+}
+
+class Date
+{
+	public:
+		Date() { month = Month::jan; day = 1; year = 1900; }	//Initialize empty date as Jan 1, 1900 or 1/1/1900
+
+		Date(Month m, int d, int y)
+			:month(m),day(d),year(y)
+		{
+			if (!isDate(m, y, d)) throw Invalid();		//if not valid throw exception invalid
+		};
+		class Invalid {};
+
+		bool isDate(int m, int d, int y)	//check if date is valid, right now just return true
+		{
+			return true;
+		}
+		//friend CashLog;
+
+
+		int GetMonth() { return month; }
+		int GetDay() { return day; }
+		int GetYear() { return year; }
+
+		void SetMonth(Month m) { month = m; }
+		void SetDay(int d) { day = d; }
+		void SetYear(int y) { year = y; }
+
+	private:
+		Month month;
+		int day;
+		int year;
+};
+
+
+
+
+
 class CashLog
 {
 	public:
-		CashLog(string str)
-			:Date(str) {}
-		CashLog(string str, double val)
-			:Date(str), Value(val) {}
-		~CashLog() {}
-		
+		CashLog(string st)			
+		{
 
-	//Member Methods
-	string GetDate() { return Date; }
-	void SetDate(string st) { Date = st; }
+		}
 
-	double GetValue() { return Value; }
-	void SetValue(double n) { Value = n; }
+
+		CashLog(Month m, int d, int y)	//initialize with //m, //d, //y, parse these values from string stream
+		{
+			Date(m, d, y);
+			
+			cout << "cashlog created. Date: " << endl;
+		}
+
+		int GetMonth() { return date.GetMonth(); }
+		int GetYear() { return date.GetYear(); }
+		int GetDay() { return date.GetDay(); }
+
+		void SetValue(double d) { value = d; }
+		double GetValue() { return value; }
+
+
+		string GetDate() { return date.GetMonth() + "/" + date.GetDay()  + date.GetYear(); }	//just a string of the date now
+		void SetDate(Month m, int d, int y)
+		{
+			date.SetMonth(m);
+			date.SetDay(d);
+			date.SetYear(y);
+		}
+
+
+
 
 	private:
-		string Date;
-		double Value;
+		Date date;
+		double value;
+
 
 };
 
@@ -60,6 +127,12 @@ void CreateCashLog(string account);
 void WriteAcntFile(Account Acnt, bool isNew);
 void WriteAcntFile(string account, vector<CashLog>Log, bool isNew);
 
+
+
+void Test()		//just a place to test things
+{
+
+}
 
 int main()
 {
@@ -86,6 +159,8 @@ int main()
 				cout << MAIN_PROMPT;
 				break;
 			case '3': EditAccounts();
+				cout << MAIN_PROMPT;
+			case '4': Test();				//for tests
 				cout << MAIN_PROMPT;
 				break;
 			default: cout << "Invalid Input. Try again\n";
@@ -195,6 +270,83 @@ void BuildNewAccount()
 	WriteAcntFile(NewAccount,true);			//true means new account
 }
 
+void AnalyzeCashLog(vector<string>Fields, string account)	//basically parsing the date and value of cashlogs right now
+{
+	//calculate average daily earnings        //and then, average in a year? in a mo?	//will need to bring the value...maybe just create cash log before
+											// function call
+	stringstream ss;
+	//string st = "";
+	string month = "";
+	string day = "";
+	string year = "";
+	string value = "";
+
+	stringstream convert;
+	double doub = 0.0;
+
+	vector<CashLog>Log;
+
+	for (int i = 0; i < Fields.size(); ++i)
+	{
+
+		ss << Fields[i];				//put 'date value' string into stringstream ss
+
+		getline(ss, month, '/');		//get month i.e 07
+
+		getline(ss, day, '/');			//get day i.e. 20
+
+		getline(ss, year, ' ');			//get year i.e. 2015
+		getline(ss, value, '\n');				//get value i.e. 200.50
+		//cout << "value == " << value << endl;
+
+
+		//try/exception block here (invalid date)
+		//Log.push_back(CashLog(account));		//before would create cash log with arbitrary date string, but lets create empty nextline
+		Log.push_back(account);
+		Log[i].SetDate(int_to_month(atoi(month.c_str())), atoi(day.c_str()), atoi(year.c_str()));
+		//try/exception block here (invalid date)
+
+		convert << value;		//start converting string to double, put value into streamstring convert
+		convert >> doub;		//put convert into doub
+
+		Log[i].SetValue(doub);		//but why does it round to only use 1 decimal place?
+		convert.clear();
+
+		cout << "month " << Log[i].GetMonth() << " day " << Log[i].GetDay() << " year " << Log[i].GetYear() << endl;
+		cout << "value " << Log[i].GetValue() << endl;
+
+		ss.clear();
+	}
+
+	//so now here we have all the cash logs assembled, as well as their values
+
+
+
+	/*for (int i = 0; i < Log.size(); ++i)
+	{
+		if (i == 0)		//if first Log entry skip for loop iteration
+			continue;
+
+
+		int daysbetween = DaysBetween();
+
+
+	}*/
+
+	//average daily
+
+	
+
+	//enumerations
+	//operator overload for enums within the cashlog class
+
+	//Log[0]::jan;
+
+	//functions needed potentially: if isLeapYear(), month day overloaded operators
+
+}
+
+
 void EditMenu(string account)
 {
 	ifstream logfile(account + ".CashLog");
@@ -209,7 +361,13 @@ void EditMenu(string account)
 		for (int i = 0; i < Fields.size(); ++i)
 		{
 			cout << "Entry [" << i << "]: " << Fields[i] << endl;
+			
 		}
+
+		//FUNCTION TO LOOK AT STATS!!!! Right now can analyze Mather and Rivergate...so
+		AnalyzeCashLog(Fields, account);
+
+
 
 		//New functionality: ask to add new Entries
 	}
@@ -245,10 +403,38 @@ void CreateCashLog(string account)
 	cout << "Please enter the date and value for new entry in seperated by whitespace\n";
 	cout << "Format should look like MM/DD/YYYY ####.##:\n";
 	cout << "Enter '|' twice to stop adding entries and save or Ctrl+Z to exit to main menu without saving\n";
+	stringstream ss;
+	string month;
+	string day;
+	string year;
+
+	int m;
+	int d;
+	int y;
+
 	while (cin>>st>>doub) //terminate?
 	{
 		//cout << "Please enter the date for new entry as MM/DD/YYYY:\n";   //note: will have to detect invalid input
-		Log.push_back(CashLog(st));
+		Log.push_back(account);
+
+
+		ss << st;				//put 'date value' string into stringstream ss
+
+		getline(ss, month, '/');		//get month i.e 07
+
+		getline(ss, day, '/');			//get day i.e. 20
+
+		getline(ss, year, ' ');			//get year i.e. 2015
+
+		ss << month;
+		ss >> m;
+		ss << day;
+		ss >> d;
+		ss << year;
+		ss >> y;
+
+		Log[Log.size() - 1].SetDate(int_to_month(m), d, y);
+
 
 		//cout << "Please enter the number value of the dated entry as numbers, eg '134.35' \n";
 		Log[Log.size() - 1].SetValue(doub);
