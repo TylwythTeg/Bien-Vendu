@@ -2,10 +2,13 @@
 #include "std_lib_facilities.h"
 #include <iostream>
 #include <cstdlib>
+#include <map>
 
 using namespace std;
 
 const string MSTR_ACNT_LIST = "Accounts.txt";
+
+//enum MonthDays {jan=31,feb=28,mar=31,apr=30,may=31,june=31,july=31,aug=31,sep=30,oct=31,nov=30,dec=31};
 
 class Account
 {
@@ -28,13 +31,90 @@ class Account
 };
 
 
-enum Month { jan = 1, feb, mar, apr, may, jun, jul, aug, sept, oct, nov, dec };
+enum Month { jan = 1, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec };
 
 Month int_to_month(int x)
 {
 	if (x<Month::jan || x>Month::dec)
-		error("bad month");		//throw?
+		cout << "error";	//throw? 
+	else
 	return Month(x);
+}
+
+string intmonth_to_str(int x)
+{
+	switch (x)
+	{
+		case 1:
+			return "jan";
+			break;
+		case 2:
+			return "feb";
+			break;
+		case 3:
+			return "mar";
+			break;
+		case 4:
+			return "apr";
+			break;
+		case 5:
+			return "may";
+			break;
+		case 6:
+			return "jun";
+			break;
+		case 7:
+			return "jul";
+			break;
+		case 8:
+			return "aug";
+			break;
+		case 9:
+			return "sept";
+			break;
+		case 10:
+			return "oct";
+			break;
+		case 11:
+			return "nov";
+			break;
+		case 12:
+			return "dec";
+			break;
+		default: cout << "Error converting intmonth to string\n";
+	}
+}
+
+Month operator++(Month& m)
+{
+	m = (m == Month::dec) ? Month::jan : Month(m + 1);
+		return m;
+}
+
+Month operator+(Month m, int n)
+{
+	for (int i = 0; i < n; ++i)
+	{
+		++m;
+	}
+	return m;
+}
+
+bool IsLeapYear(int year)
+{
+	if (year % 4 == 0)
+	{
+		if (year % 100 == 0)
+		{
+			if (year % 400 == 0)
+			{
+				return true;
+			}
+			return false;
+		}
+		return true;
+	}
+	return false;
 }
 
 class Date
@@ -49,11 +129,10 @@ class Date
 		};
 		class Invalid {};
 
-		bool isDate(int m, int d, int y)	//check if date is valid, right now just return true
+		bool isDate(int m, int d, int y)	//check if date is valid, right now just return true //make helper function
 		{
 			return true;
 		}
-		//friend CashLog;
 
 
 		int GetMonth() { return month; }
@@ -94,6 +173,8 @@ class CashLog
 		int GetYear() { return date.GetYear(); }
 		int GetDay() { return date.GetDay(); }
 
+		void SetDay(int n) { date.SetDay(n); }
+
 		void SetValue(double d) { value = d; }
 		double GetValue() { return value; }
 
@@ -131,6 +212,68 @@ void WriteAcntFile(string account, vector<CashLog>Log, bool isNew);
 
 void Test()		//just a place to test things
 {
+	map<string, double> entry;
+
+	ifstream logfile("Remington.CashLog");
+	if (logfile)	//file already exists, we must read it
+	{
+		logfile.close();
+
+		//create vector of fields, eg Fields[i] = 07/24/2015 132.50
+		vector<string>Fields = ParseFile("Remington.CashLog");
+
+		map<string, double> entry;
+		string st;
+		string month = "";
+		string day = "";
+		string year = "";
+		string value = "";
+		string last_entry = "";
+
+		stringstream ss;
+		double doub = 0.0;
+
+		//print entries
+		for (int i = 0; i < Fields.size(); ++i)
+		{
+			cout << "Entry [" << i << "]: " << Fields[i] << endl;
+
+			//getline(Fields[i], st, ' ')
+			stringstream convert;
+
+			ss << Fields[i];				//put 'date value' string into stringstream ss
+
+			getline(ss, month, '/');		//get month i.e 07
+
+			getline(ss, day, '/');			//get day i.e. 20
+
+			getline(ss, year, ' ');			//get year i.e. 2015
+			getline(ss, value, '\n');
+			convert << value;		//start converting string to double, put value into streamstring convert
+			convert >> doub;		//put convert into doub
+
+
+			//math	//right now for test all in same month
+
+
+
+
+			//math
+
+
+
+			entry[month + "/" + day + "/" + year] = doub;
+
+
+
+			last_entry = month + "/" + day + "/" + year;	//set last_entry string composed of current values
+
+		}
+
+		//so now just read all entries and made a map for each, now what?
+
+	}
+
 
 }
 
@@ -270,6 +413,95 @@ void BuildNewAccount()
 	WriteAcntFile(NewAccount,true);			//true means new account
 }
 
+int DaysBetween(CashLog LateLog, CashLog EarlyLog)	//Find amount of days beetween two cash logs
+{
+	int daystosubtract = 0;
+	int totaldays = 0;
+	//vector<Month>months;
+
+	map<string, int>Days;
+	Days["jan"] = 31;
+	Days["feb"] = 28;
+	Days["mar"] = 31;
+	Days["apr"] = 30;
+	Days["may"] = 31;
+	Days["jun"] = 30;
+	Days["jul"] = 31;
+	Days["aug"] = 31;
+	Days["sep"] = 30;
+	Days["oct"] = 31;
+	Days["nov"] = 30;
+	Days["dec"] = 31;
+
+
+	if (LateLog.GetMonth() == EarlyLog.GetMonth())
+	{
+
+		if (LateLog.GetYear() == EarlyLog.GetYear())	
+			return LateLog.GetDay() - EarlyLog.GetDay();	//mo and day are same so return simple difference of days
+
+		//now do if year are not the same but but months are
+		//
+		//
+		//
+	}
+
+	if (LateLog.GetYear() == EarlyLog.GetYear())	//months are not the same but year is
+	{
+		if (EarlyLog.GetDay() > LateLog.GetDay())	//like if earlylog is 3/8/2016 and latelog is 7/5/2016 (partial month)
+		{
+			//daystosubtract = LateLog.GetDay() - EarlyLog.GetDay();		//subtract these days later
+			daystosubtract = EarlyLog.GetDay() - LateLog.GetDay();
+			LateLog.SetDay(EarlyLog.GetDay());							//set days to the same
+		}
+		
+		//cout << "sdfsdfsdfsdfsdfsdfsdf\n";
+		cout << "Days to subtract " << daystosubtract << endl;
+		int monthsbetween = LateLog.GetMonth() - EarlyLog.GetMonth();	//4
+		cout << "monthsbetween " << monthsbetween;
+		int currentmonth = EarlyLog.GetMonth();	//gonna go from earlylog to latelog
+
+		cout << "GETMONTH: " << EarlyLog.GetMonth() << endl;
+
+		//int mnthsbtwn = 4;
+
+		//string monthstring = to_string(int_to_month(currentmonth));
+		string monthstring = intmonth_to_str(currentmonth);
+		cout << "monthstring: " << monthstring << endl;
+
+		for (int i = 0; i <monthsbetween; ++i)
+		{
+			cout << "totaldays" << totaldays << endl;
+			cout << Days[monthstring];
+
+
+			if (i==0)	//if first month we must subtract days from out starting point
+			{
+				totaldays += (Days[monthstring] - EarlyLog.GetDay()); //31-8 = 23 total days
+			}
+			if (i != 0)
+			{
+				totaldays += (Days[monthstring]);
+			}
+
+			cout << "totaldays" << totaldays << endl;
+			monthstring = intmonth_to_str(EarlyLog.GetMonth()+(i+1));	//monthstring is now string of month + (iterations+1)
+
+			
+		}
+		//ran through up to beginning of LateLog.GetMonth()
+		totaldays += LateLog.GetDay();
+		//now we have found the days between for perfect months
+		
+
+		//subtract daystosubtract
+		totaldays-=daystosubtract;
+
+		return totaldays;
+	}
+
+}
+
 void AnalyzeCashLog(vector<string>Fields, string account)	//basically parsing the date and value of cashlogs right now
 {
 	//calculate average daily earnings        //and then, average in a year? in a mo?	//will need to bring the value...maybe just create cash log before
@@ -322,16 +554,18 @@ void AnalyzeCashLog(vector<string>Fields, string account)	//basically parsing th
 
 
 
-	/*for (int i = 0; i < Log.size(); ++i)
+	for (int i = 0; i < Log.size(); ++i)
 	{
 		if (i == 0)		//if first Log entry skip for loop iteration
 			continue;
 
+		cout << "i== " << i << endl;
 
-		int daysbetween = DaysBetween();
 
+		int daysbetween = DaysBetween(Log[i],Log[i-1]);
 
-	}*/
+		cout << "There are " << daysbetween << " days between " << Log[i].GetDate() << " and " << Log[i - 1].GetDate() << endl;
+	}
 
 	//average daily
 
