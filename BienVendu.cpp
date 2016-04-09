@@ -8,8 +8,6 @@ using namespace std;
 
 const string MSTR_ACNT_LIST = "Accounts.txt";
 
-//enum MonthDays {jan=31,feb=28,mar=31,apr=30,may=31,june=31,july=31,aug=31,sep=30,oct=31,nov=30,dec=31};
-
 class Account
 {
 	public:
@@ -488,6 +486,8 @@ int DaysBetween(CashLog LateLog, CashLog EarlyLog)	//Find amount of days beetwee
 		string monthstring = intmonth_to_str(currentmonth);
 		cout << "monthstring: " << monthstring << endl;
 
+		int currentyear = EarlyLog.GetYear();
+
 		Month newmonth;
 
 	//	for (int j = 0; j <= yearsbetween;++j)
@@ -508,13 +508,17 @@ int DaysBetween(CashLog LateLog, CashLog EarlyLog)	//Find amount of days beetwee
 				totaldays += (Days[monthstring]);
 			}
 
+			if ((monthstring == "feb") && IsLeapYear(currentyear))
+				totaldays++;
+
 			cout << "totaldays" << totaldays << endl;
 			monthstring = intmonth_to_str(EarlyLog.GetMonth()+(i+1));	//monthstring is now string of month + (iterations+1)
 			//why can't it move from dec to jan?
 			//cout << monthstring;
 			cout << "intmonth" << monthstring << endl;	//goes beyond 12...
 
-			
+			if(monthstring == "jan")
+				currentyear++;
 		}
 		//}
 		//ran through up to beginning of LateLog.GetMonth()
