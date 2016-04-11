@@ -4,13 +4,11 @@ Goal:
 To create a program that can manage vending accounts
 
 Allow user to:
-Create, remove, edit and manage accounts at will
+Create, remove, edit, delete and manage accounts at will
 
 View Account analytics:
-Cash per account per machine per day between log of cash
+Cash per account, view cash made per day since last log date
 
 Edit Accounts to:
-Manage any number of machines per account, of machine type soda or snack
 Create and append cash log files per machine (money in)
-If soda machine, company type and asset number attributes
 
