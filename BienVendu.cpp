@@ -10,22 +10,22 @@ const string MSTR_ACNT_LIST = "Accounts.txt";
 
 class Account
 {
-	public:
-		//Constructor/Deconstructor
-		Account() { /*cout << "\n\tBuilding an Account";*/ }
-		~Account() { /*cout << "\n\tDestroying an Account";*/  }
+public:
+	//Constructor/Deconstructor
+	Account() { /*cout << "\n\tBuilding an Account";*/ }
+	~Account() { /*cout << "\n\tDestroying an Account";*/ }
 
-		//Member Methods
-		string GetAccountName() { return AccountName; }
-		void SetAccountName(string st) { AccountName = st; }
+	//Member Methods
+	string GetAccountName() { return AccountName; }
+	void SetAccountName(string st) { AccountName = st; }
 
-		int GetNumOfMachines() { return NumOfMachines; }
-		void SetNumOfMachines(int n) { NumOfMachines = n; }
+	int GetNumOfMachines() { return NumOfMachines; }
+	void SetNumOfMachines(int n) { NumOfMachines = n; }
 
-	private:
-		string AccountName;
-		int NumOfMachines;
-		vector<double>cash;
+private:
+	string AccountName;
+	int NumOfMachines;
+	vector<double>cash;
 };
 
 
@@ -36,50 +36,50 @@ Month int_to_month(int x)
 	if (x<Month::jan || x>Month::dec)
 		cout << "error";	//throw? 
 	else
-	return Month(x);
+		return Month(x);
 }
 
 string intmonth_to_str(int x)
 {
 	switch (x)
 	{
-		case 1:
-			return "jan";
-			break;
-		case 2:
-			return "feb";
-			break;
-		case 3:
-			return "mar";
-			break;
-		case 4:
-			return "apr";
-			break;
-		case 5:
-			return "may";
-			break;
-		case 6:
-			return "jun";
-			break;
-		case 7:
-			return "jul";
-			break;
-		case 8:
-			return "aug";
-			break;
-		case 9:
-			return "sep";
-			break;
-		case 10:
-			return "oct";
-			break;
-		case 11:
-			return "nov";
-			break;
-		case 12:
-			return "dec";
-			break;
-		default: /*cout << "Error converting intmonth to string\n"*/;
+	case 1:
+		return "jan";
+		break;
+	case 2:
+		return "feb";
+		break;
+	case 3:
+		return "mar";
+		break;
+	case 4:
+		return "apr";
+		break;
+	case 5:
+		return "may";
+		break;
+	case 6:
+		return "jun";
+		break;
+	case 7:
+		return "jul";
+		break;
+	case 8:
+		return "aug";
+		break;
+	case 9:
+		return "sep";
+		break;
+	case 10:
+		return "oct";
+		break;
+	case 11:
+		return "nov";
+		break;
+	case 12:
+		return "dec";
+		break;
+	default: /*cout << "Error converting intmonth to string\n"*/;
 	}
 
 	int y = x % 12;
@@ -133,19 +133,19 @@ string intmonth_to_str(int x)
 Month operator++(Month& m)
 {
 	m = (m == Month::dec) ? Month::jan : Month(int(m) + 1);
-		return m;
+	return m;
 
-		
 
-		/*if (m == Month::dec)
-		{ 
-			m = static_cast<Month>(Month::jan);
-			return m;
-		}
 
-		//return Month(m + 1);
-		m = static_cast<Month>(m + 1);
-		return m;*/
+	/*if (m == Month::dec)
+	{
+	m = static_cast<Month>(Month::jan);
+	return m;
+	}
+
+	//return Month(m + 1);
+	m = static_cast<Month>(m + 1);
+	return m;*/
 }
 
 Month operator+(Month m, int n)
@@ -176,34 +176,34 @@ bool IsLeapYear(int year)
 
 class Date
 {
-	public:
-		Date() { month = Month::jan; day = 1; year = 1900; }	//Initialize empty date as Jan 1, 1900 or 1/1/1900
+public:
+	Date() { month = Month::jan; day = 1; year = 1900; }	//Initialize empty date as Jan 1, 1900 or 1/1/1900
 
-		Date(Month m, int d, int y)
-			:month(m),day(d),year(y)
-		{
-			if (!isDate(m, y, d)) throw Invalid();		//if not valid throw exception invalid
-		};
-		class Invalid {};
+	Date(Month m, int d, int y)
+		:month(m), day(d), year(y)
+	{
+		if (!isDate(m, y, d)) throw Invalid();		//if not valid throw exception invalid
+	};
+	class Invalid {};
 
-		bool isDate(int m, int d, int y)	//check if date is valid, right now just return true //make helper function
-		{
-			return true;
-		}
+	bool isDate(int m, int d, int y)	//check if date is valid, right now just return true //make helper function
+	{
+		return true;
+	}
 
 
-		int GetMonth() { return month; }
-		int GetDay() { return day; }
-		int GetYear() { return year; }
+	int GetMonth() { return month; }
+	int GetDay() { return day; }
+	int GetYear() { return year; }
 
-		void SetMonth(Month m) { month = m; }
-		void SetDay(int d) { day = d; }
-		void SetYear(int y) { year = y; }
+	void SetMonth(Month m) { month = m; }
+	void SetDay(int d) { day = d; }
+	void SetYear(int y) { year = y; }
 
-	private:
-		Month month;
-		int day;
-		int year;
+private:
+	Month month;
+	int day;
+	int year;
 };
 
 
@@ -212,44 +212,44 @@ class Date
 
 class CashLog
 {
-	public:
-		CashLog(string st)			
-		{
+public:
+	CashLog(string st)
+	{
 
-		}
-
-
-		CashLog(Month m, int d, int y)	//initialize with //m, //d, //y, parse these values from string stream
-		{
-			Date(m, d, y);
-			
-			cout << "cashlog created. Date: " << endl;
-		}
-
-		int GetMonth() { return date.GetMonth(); }
-		int GetYear() { return date.GetYear(); }
-		int GetDay() { return date.GetDay(); }
-
-		void SetDay(int n) { date.SetDay(n); }
-
-		void SetValue(double d) { value = d; }
-		double GetValue() { return value; }
+	}
 
 
-		string GetDate() { return date.GetMonth() + "/" + date.GetDay()  + date.GetYear(); }	//just a string of the date now
-		void SetDate(Month m, int d, int y)
-		{
-			date.SetMonth(m);
-			date.SetDay(d);
-			date.SetYear(y);
-		}
+	CashLog(Month m, int d, int y)	//initialize with //m, //d, //y, parse these values from string stream
+	{
+		Date(m, d, y);
+
+		cout << "cashlog created. Date: " << endl;
+	}
+
+	int GetMonth() { return date.GetMonth(); }
+	int GetYear() { return date.GetYear(); }
+	int GetDay() { return date.GetDay(); }
+
+	void SetDay(int n) { date.SetDay(n); }
+
+	void SetValue(double d) { value = d; }
+	double GetValue() { return value; }
+
+
+	string GetDate() { return date.GetMonth() + "/" + date.GetDay() + date.GetYear(); }	//just a string of the date now
+	void SetDate(Month m, int d, int y)
+	{
+		date.SetMonth(m);
+		date.SetDay(d);
+		date.SetYear(y);
+	}
 
 
 
 
-	private:
-		Date date;
-		double value;
+private:
+	Date date;
+	double value;
 
 
 };
@@ -257,10 +257,10 @@ class CashLog
 //declare functions
 vector<string> ParseFile(string file);
 Account BuildAccountFromFile(string account_file);
-void ViewAccounts();
+//void ViewAccounts();
 void BuildNewAccount();
 void EditMenu(string account);
-void EditAccounts();
+void ViewEditAccounts();
 void CreateCashLog(string account);
 void WriteAcntFile(Account Acnt, bool isNew);
 void WriteAcntFile(string account, vector<CashLog>Log, bool isNew);
@@ -269,7 +269,7 @@ void WriteAcntFile(string account, vector<CashLog>Log, bool isNew);
 
 void Test()		//just a place to test things
 {
-	
+
 	Month m = Month::oct;
 
 	/*cout << "Month: " << m << endl;
@@ -283,7 +283,7 @@ void Test()		//just a place to test things
 	cout << "Month: " << m << endl;
 	++m;*/
 	cout << "Month: " << m << endl;
-	m=m+3;
+	m = m + 3;
 	cout << "Month: " << m << endl;
 
 
@@ -293,39 +293,34 @@ int main()
 {
 	cout << "Welcome to Bien Vendu\n";
 
-	const string MAIN_PROMPT = "Enter a number to select an option: \n\t1. View Accounts\n\t2. Create New Account\n\t3. Edit Accounts\nCtrl - Z to exit program\n";
+	const string MAIN_PROMPT = "Enter a number to select an option: \n\t1. View/Edit Accounts\n\t2. Create New Account\nCtrl - Z to exit program\n";
 	cout << MAIN_PROMPT;
 	//Will want to merge View/Edit Accounts, no real reason to be seperate
 
 	char n = '0';
 	//cin >> n;
 
-	while(cin>>n)	//main menu input loop
-	{ 
+	while (cin >> n)	//main menu input loop
+	{
 		//cout << "Enter a number to select an option: \n";
 		//cout << "\t1. View Accounts\n\t2. Create New Account\n\t3. Edit Accounts\n";
 
 		switch (n)
 		{
-			case '1': ViewAccounts();
-				cout << MAIN_PROMPT;
-				break;
-			case '2': BuildNewAccount();
-				cout << MAIN_PROMPT;
-				break;
-			case '3': EditAccounts();
-				cout << MAIN_PROMPT;
-			case '4': Test();				//for tests
-				cout << MAIN_PROMPT;
-				break;
-			default: cout << "Invalid Input. Try again\n";
+		case '1': ViewEditAccounts();
+			cout << MAIN_PROMPT;
+			break;
+		case '2': BuildNewAccount();
+			cout << MAIN_PROMPT;
+			break;
+		default: cout << "Invalid Input. Try again\n";
 		}
 
 		//So typing something like '42' won't have the program respond with default case followed by case '2'
 		cin.clear();
 		//cin.ignore();
 	}
-	
+
 	cout << "\nOutside Main Menu\n\n";
 
 
@@ -339,19 +334,7 @@ int main()
 
 void ViewAccounts()
 {
-	//Retrieve list of all accounts from master list
-	vector<string>accounts = ParseFile(MSTR_ACNT_LIST);
-
-	//Run through build and print all accounts from list
-	cout << "\nAccounts List: \n\n";
-
-	for (int i = 0; i < accounts.size(); ++i)
-	{
-		Account Acnt = BuildAccountFromFile(accounts[i] + ".txt");  //Build account from .txt...for instance one loop pass through will build Atherton from Atherton.txt
-		cout << "\t" << Acnt.GetAccountName() << " has " << Acnt.GetNumOfMachines() << " machines\n";
-	}
-
-	cout << endl;
+	
 
 	return;
 }
@@ -373,7 +356,7 @@ vector<string> ParseFile(string file)
 		{
 			getline(filestream, st);
 
-			if (filestream.eof()) 
+			if (filestream.eof())
 				break;
 			Fields.push_back(st);
 		}
@@ -381,7 +364,7 @@ vector<string> ParseFile(string file)
 		filestream.close();
 		return Fields;
 	}
-	
+
 }
 
 Account BuildAccountFromFile(string account_file)
@@ -422,7 +405,7 @@ void BuildNewAccount()
 	cout << "Number of machines for " << NewAccount.GetAccountName() << " is " << NewAccount.GetNumOfMachines() << endl;
 
 	//Write to new account.txt file
-	WriteAcntFile(NewAccount,true);			//true means new account
+	WriteAcntFile(NewAccount, true);			//true means new account
 }
 
 int DaysBetween(CashLog LateLog, CashLog EarlyLog)	//Find amount of days beetween two cash logs
@@ -448,88 +431,88 @@ int DaysBetween(CashLog LateLog, CashLog EarlyLog)	//Find amount of days beetwee
 
 	if ((LateLog.GetMonth() == EarlyLog.GetMonth()) && (LateLog.GetYear() == EarlyLog.GetYear()))
 	{
-			return LateLog.GetDay() - EarlyLog.GetDay();	//mo and day are same so return simple difference of days
+		return LateLog.GetDay() - EarlyLog.GetDay();	//mo and day are same so return simple difference of days
 
-		//now do if year are not the same but but months are
-		//
-		//
-		//
+														//now do if year are not the same but but months are
+														//
+														//
+														//
 	}
 
 	//if (LateLog.GetYear() == EarlyLog.GetYear())	//months are not the same but year is
 	//{
-		if (EarlyLog.GetDay() > LateLog.GetDay())	//like if earlylog is 3/8/2016 and latelog is 7/5/2016 (partial month)
-		{
-			//daystosubtract = LateLog.GetDay() - EarlyLog.GetDay();		//subtract these days later
-			daystosubtract = EarlyLog.GetDay() - LateLog.GetDay();
-			LateLog.SetDay(EarlyLog.GetDay());							//set days to the same
-		}
-		
-		//cout << "sdfsdfsdfsdfsdfsdfsdf\n";
-		cout << "Days to subtract " << daystosubtract << endl;
-		int monthsbetween = LateLog.GetMonth() - EarlyLog.GetMonth();	//4
-		cout << "monthsbetween " << monthsbetween;
-		int currentmonth = EarlyLog.GetMonth();	//gonna go from earlylog to latelog
+	if (EarlyLog.GetDay() > LateLog.GetDay())	//like if earlylog is 3/8/2016 and latelog is 7/5/2016 (partial month)
+	{
+		//daystosubtract = LateLog.GetDay() - EarlyLog.GetDay();		//subtract these days later
+		daystosubtract = EarlyLog.GetDay() - LateLog.GetDay();
+		LateLog.SetDay(EarlyLog.GetDay());							//set days to the same
+	}
 
-		cout << "GETMONTH: " << EarlyLog.GetMonth() << endl;
+	//cout << "sdfsdfsdfsdfsdfsdfsdf\n";
+	cout << "Days to subtract " << daystosubtract << endl;
+	int monthsbetween = LateLog.GetMonth() - EarlyLog.GetMonth();	//4
+	cout << "monthsbetween " << monthsbetween;
+	int currentmonth = EarlyLog.GetMonth();	//gonna go from earlylog to latelog
 
-
-		//yearsbetween
-		int yearsbetween = LateLog.GetYear() - EarlyLog.GetYear();
-		monthsbetween = monthsbetween + (yearsbetween * 12);
-		//yearsbetween
+	cout << "GETMONTH: " << EarlyLog.GetMonth() << endl;
 
 
-		//int mnthsbtwn = 4;
+	//yearsbetween
+	int yearsbetween = LateLog.GetYear() - EarlyLog.GetYear();
+	monthsbetween = monthsbetween + (yearsbetween * 12);
+	//yearsbetween
 
-		//string monthstring = to_string(int_to_month(currentmonth));
-		string monthstring = intmonth_to_str(currentmonth);
-		cout << "monthstring: " << monthstring << endl;
 
-		int currentyear = EarlyLog.GetYear();
+	//int mnthsbtwn = 4;
 
-		Month newmonth;
+	//string monthstring = to_string(int_to_month(currentmonth));
+	string monthstring = intmonth_to_str(currentmonth);
+	cout << "monthstring: " << monthstring << endl;
+
+	int currentyear = EarlyLog.GetYear();
+
+	Month newmonth;
 
 	//	for (int j = 0; j <= yearsbetween;++j)
-		//{ 
-		//	cout << "once";
-		for (int i = 0; i <monthsbetween; ++i)
+	//{ 
+	//	cout << "once";
+	for (int i = 0; i <monthsbetween; ++i)
+	{
+		//cout << "totaldays" << totaldays << endl;
+		cout << Days[monthstring];
+
+
+		if (i == 0)	//if first month we must subtract days from out starting point
 		{
-			//cout << "totaldays" << totaldays << endl;
-			cout << Days[monthstring];
-
-
-			if (i==0)	//if first month we must subtract days from out starting point
-			{
-				totaldays += (Days[monthstring] - EarlyLog.GetDay()); //31-8 = 23 total days
-			}
-			if (i != 0)
-			{
-				totaldays += (Days[monthstring]);
-			}
-
-			if ((monthstring == "feb") && IsLeapYear(currentyear))
-				totaldays++;
-
-			cout << "totaldays" << totaldays << endl;
-			monthstring = intmonth_to_str(EarlyLog.GetMonth()+(i+1));	//monthstring is now string of month + (iterations+1)
-			//why can't it move from dec to jan?
-			//cout << monthstring;
-			cout << "intmonth" << monthstring << endl;	//goes beyond 12...
-
-			if(monthstring == "jan")
-				currentyear++;
+			totaldays += (Days[monthstring] - EarlyLog.GetDay()); //31-8 = 23 total days
 		}
-		//}
-		//ran through up to beginning of LateLog.GetMonth()
-		totaldays += LateLog.GetDay();
-		//now we have found the days between for perfect months
-		
+		if (i != 0)
+		{
+			totaldays += (Days[monthstring]);
+		}
 
-		//subtract daystosubtract
-		totaldays-=daystosubtract;
+		if ((monthstring == "feb") && IsLeapYear(currentyear))
+			totaldays++;
 
-		return totaldays;
+		cout << "totaldays" << totaldays << endl;
+		monthstring = intmonth_to_str(EarlyLog.GetMonth() + (i + 1));	//monthstring is now string of month + (iterations+1)
+																		//why can't it move from dec to jan?
+																		//cout << monthstring;
+		cout << "intmonth" << monthstring << endl;	//goes beyond 12...
+
+		if (monthstring == "jan")
+			currentyear++;
+	}
+	//}
+	//ran through up to beginning of LateLog.GetMonth()
+	totaldays += LateLog.GetDay();
+	//now we have found the days between for perfect months
+
+
+	//subtract daystosubtract
+	totaldays -= daystosubtract;
+
+	return totaldays;
 	//}
 
 }
@@ -537,7 +520,7 @@ int DaysBetween(CashLog LateLog, CashLog EarlyLog)	//Find amount of days beetwee
 void AnalyzeCashLog(vector<string>Fields, string account)	//basically parsing the date and value of cashlogs right now
 {
 	//calculate average daily earnings        //and then, average in a year? in a mo?	//will need to bring the value...maybe just create cash log before
-											// function call
+	// function call
 	stringstream ss;
 	//string st = "";
 	string month = "";
@@ -561,11 +544,11 @@ void AnalyzeCashLog(vector<string>Fields, string account)	//basically parsing th
 
 		getline(ss, year, ' ');			//get year i.e. 2015
 		getline(ss, value, '\n');				//get value i.e. 200.50
-		//cout << "value == " << value << endl;
+												//cout << "value == " << value << endl;
 
 
-		//try/exception block here (invalid date)
-		//Log.push_back(CashLog(account));		//before would create cash log with arbitrary date string, but lets create empty nextline
+												//try/exception block here (invalid date)
+												//Log.push_back(CashLog(account));		//before would create cash log with arbitrary date string, but lets create empty nextline
 		Log.push_back(account);
 		Log[i].SetDate(int_to_month(atoi(month.c_str())), atoi(day.c_str()), atoi(year.c_str()));
 		//try/exception block here (invalid date)
@@ -594,14 +577,14 @@ void AnalyzeCashLog(vector<string>Fields, string account)	//basically parsing th
 		cout << "i== " << i << endl;
 
 
-		int daysbetween = DaysBetween(Log[i],Log[i-1]);
+		int daysbetween = DaysBetween(Log[i], Log[i - 1]);
 
 		cout << "There are " << daysbetween << " days between " << Log[i].GetDate() << " and " << Log[i - 1].GetDate() << endl;
 	}
 
 	//average daily
 
-	
+
 
 	//enumerations
 	//operator overload for enums within the cashlog class
@@ -627,7 +610,7 @@ void EditMenu(string account)
 		for (int i = 0; i < Fields.size(); ++i)
 		{
 			cout << "Entry [" << i << "]: " << Fields[i] << endl;
-			
+
 		}
 
 		//FUNCTION TO LOOK AT STATS!!!! Right now can analyze Mather and Rivergate...so
@@ -678,7 +661,7 @@ void CreateCashLog(string account)
 	int d;
 	int y;
 
-	while (cin>>st>>doub) //terminate?
+	while (cin >> st >> doub) //terminate?
 	{
 		//cout << "Please enter the date for new entry as MM/DD/YYYY:\n";   //note: will have to detect invalid input
 		Log.push_back(account);
@@ -717,12 +700,12 @@ void CreateCashLog(string account)
 
 		switch (ch)
 		{
-			case 'y': //yes, go ahead and write
-				if (Log.empty())	return;			//if Log vector is empty there is NOTHING TO WRITE, IGNORE USER AND RETURN TO MAIN MENU
-				break;
-			case 'n': return;
-				break;
-			default: cout << "Reverting without saving\n";	return;
+		case 'y': //yes, go ahead and write
+			if (Log.empty())	return;			//if Log vector is empty there is NOTHING TO WRITE, IGNORE USER AND RETURN TO MAIN MENU
+			break;
+		case 'n': return;
+			break;
+		default: cout << "Reverting without saving\n";	return;
 		}
 
 		//return;
@@ -733,25 +716,31 @@ void CreateCashLog(string account)
 		cout << "End" << endl;
 		return;
 	}
-		
+
 
 	WriteAcntFile(account, Log, true);
 }
 
-void EditAccounts()			//reduce redundancy between EditAccounts() and ViewAccounts()?
+void ViewEditAccounts()			//reduce redundancy between EditAccounts() and ViewAccounts()?
 {
 
 	cin.clear();
 	cin.ignore();
 
-	//list of all accounts.txt
-	cout << "Accounts: \n";
+
+	//Retrieve list of all accounts from master list
 	vector<string>accounts = ParseFile(MSTR_ACNT_LIST);
 
-	for (int i = 0; i < accounts.size(); i++)
+	//Run through build and print all accounts from list
+	cout << "\nAccounts List: \n\n";
+
+	for (int i = 0; i < accounts.size(); ++i)
 	{
-		cout << accounts[i] << ": \n\t";
+		Account Acnt = BuildAccountFromFile(accounts[i] + ".txt");  //Build account from .txt...for instance one loop pass through will build Atherton from Atherton.txt
+		cout << "\t" << Acnt.GetAccountName() << " has " << Acnt.GetNumOfMachines() << " machines\n";
 	}
+
+	cout << endl;
 
 	cout << "Type the name of an Account to Edit (Preserve Capitalization):\n";
 	string st = "";
@@ -798,7 +787,7 @@ void WriteAcntFile(string account, vector<CashLog>Log, bool isNew)  //For CashLo
 		//return; //return back to main
 	}
 	else
-	{ 
+	{
 		for (int i = 0; i < Log.size(); ++i)
 		{
 			//save and print
