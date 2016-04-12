@@ -12,8 +12,8 @@ class Account
 {
 public:
 	//Constructor/Deconstructor
-	Account() { /*cout << "\n\tBuilding an Account";*/ }
-	~Account() { /*cout << "\n\tDestroying an Account";*/ }
+	Account() {}
+	~Account() {}
 
 	//Member Methods
 	string GetAccountName() { return AccountName; }
@@ -41,49 +41,7 @@ Month int_to_month(int x)
 
 string intmonth_to_str(int x)
 {
-	switch (x)
-	{
-	case 1:
-		return "jan";
-		break;
-	case 2:
-		return "feb";
-		break;
-	case 3:
-		return "mar";
-		break;
-	case 4:
-		return "apr";
-		break;
-	case 5:
-		return "may";
-		break;
-	case 6:
-		return "jun";
-		break;
-	case 7:
-		return "jul";
-		break;
-	case 8:
-		return "aug";
-		break;
-	case 9:
-		return "sep";
-		break;
-	case 10:
-		return "oct";
-		break;
-	case 11:
-		return "nov";
-		break;
-	case 12:
-		return "dec";
-		break;
-	default: /*cout << "Error converting intmonth to string\n"*/;
-	}
-
 	int y = x % 12;
-	cout << "mod" << y << endl;
 
 	if (y == 0)
 		return "dec";
@@ -134,18 +92,6 @@ Month operator++(Month& m)
 {
 	m = (m == Month::dec) ? Month::jan : Month(int(m) + 1);
 	return m;
-
-
-
-	/*if (m == Month::dec)
-	{
-	m = static_cast<Month>(Month::jan);
-	return m;
-	}
-
-	//return Month(m + 1);
-	m = static_cast<Month>(m + 1);
-	return m;*/
 }
 
 Month operator+(Month m, int n)
@@ -174,6 +120,25 @@ bool IsLeapYear(int year)
 	return false;
 }
 
+bool isDate(int m, int d, int y)	//check if date is valid
+{
+	if (m >= 1 && m <= 12)
+	{
+		if (d <= 31 && d >= 1)
+		{
+			if ((m == 2 && d <= 28) || (m == 2 && d == 29 && IsLeapYear(y)))
+				return true;
+
+			if (m == 1 || m == 3 || m == 5 || m == 7 || m == 8 || m == 10 || m == 12)
+				return true;
+
+			if ((m == 4 || m == 6 || m == 9 || m == 11) && d <= 30)
+				return true;
+		}
+	}
+	return false;
+}
+
 class Date
 {
 public:
@@ -181,16 +146,9 @@ public:
 
 	Date(Month m, int d, int y)
 		:month(m), day(d), year(y)
-	{
-		if (!isDate(m, y, d)) throw Invalid();		//if not valid throw exception invalid
-	};
+	{};
 	class Invalid {};
-
-	bool isDate(int m, int d, int y)	//check if date is valid, right now just return true //make helper function
-	{
-		return true;
-	}
-
+	
 
 	int GetMonth() { return month; }
 	int GetDay() { return day; }
@@ -209,7 +167,6 @@ private:
 
 
 
-
 class CashLog
 {
 public:
@@ -223,8 +180,34 @@ public:
 	{
 		Date(m, d, y);
 
-		cout << "cashlog created. Date: " << endl;
+		cout << "Cashlog created. Date: " << endl;
 	}
+
+
+	friend bool operator<(CashLog Log1, CashLog Log2)
+	{
+		//different years
+		if (Log1.GetYear() < Log2.GetYear())			
+			return true;
+		else if (Log1.GetYear() > Log2.GetYear())
+			return false;
+
+		//same year, different months
+		if (Log1.GetMonth() < Log2.GetMonth())
+			return true;
+		else if (Log1.GetMonth() > Log2.GetMonth())
+			return false;
+
+		//same year, same month, different days
+		if (Log1.GetDay() < Log2.GetDay())				
+			return true;
+		if (Log1.GetDay() > Log2.GetDay())
+			return false;
+		else										//same days (same date)
+			return false;
+	}
+
+
 
 	int GetMonth() { return date.GetMonth(); }
 	int GetYear() { return date.GetYear(); }
@@ -236,7 +219,12 @@ public:
 	double GetValue() { return value; }
 
 
-	string GetDate() { return date.GetMonth() + "/" + date.GetDay() + date.GetYear(); }	//just a string of the date now
+	string GetDate() //string of date in #/#/####
+	{ 
+	 return (to_string(date.GetMonth()) + "/" + to_string(date.GetDay()) + "/" + to_string(date.GetYear()));
+	}
+
+
 	void SetDate(Month m, int d, int y)
 	{
 		date.SetMonth(m);
@@ -270,23 +258,6 @@ void WriteAcntFile(string account, vector<CashLog>Log, bool isNew);
 void Test()		//just a place to test things
 {
 
-	Month m = Month::oct;
-
-	/*cout << "Month: " << m << endl;
-	++m;
-	cout << "Month: " << m << endl;
-	++m;
-	cout << "Month: " << m << endl;
-	++m;
-	cout << "Month: " << m << endl;
-	++m;
-	cout << "Month: " << m << endl;
-	++m;*/
-	cout << "Month: " << m << endl;
-	m = m + 3;
-	cout << "Month: " << m << endl;
-
-
 }
 
 int main()
@@ -302,9 +273,6 @@ int main()
 
 	while (cin >> n)	//main menu input loop
 	{
-		//cout << "Enter a number to select an option: \n";
-		//cout << "\t1. View Accounts\n\t2. Create New Account\n\t3. Edit Accounts\n";
-
 		switch (n)
 		{
 		case '1': ViewEditAccounts();
@@ -433,28 +401,17 @@ int DaysBetween(CashLog LateLog, CashLog EarlyLog)	//Find amount of days beetwee
 	{
 		return LateLog.GetDay() - EarlyLog.GetDay();	//mo and day are same so return simple difference of days
 
-														//now do if year are not the same but but months are
-														//
-														//
-														//
 	}
 
-	//if (LateLog.GetYear() == EarlyLog.GetYear())	//months are not the same but year is
-	//{
+	
 	if (EarlyLog.GetDay() > LateLog.GetDay())	//like if earlylog is 3/8/2016 and latelog is 7/5/2016 (partial month)
-	{
-		//daystosubtract = LateLog.GetDay() - EarlyLog.GetDay();		//subtract these days later
-		daystosubtract = EarlyLog.GetDay() - LateLog.GetDay();
+	{		
+		daystosubtract = EarlyLog.GetDay() - LateLog.GetDay();	//subtract these days later
 		LateLog.SetDay(EarlyLog.GetDay());							//set days to the same
 	}
 
-	//cout << "sdfsdfsdfsdfsdfsdfsdf\n";
-	cout << "Days to subtract " << daystosubtract << endl;
 	int monthsbetween = LateLog.GetMonth() - EarlyLog.GetMonth();	//4
-	cout << "monthsbetween " << monthsbetween;
 	int currentmonth = EarlyLog.GetMonth();	//gonna go from earlylog to latelog
-
-	cout << "GETMONTH: " << EarlyLog.GetMonth() << endl;
 
 
 	//yearsbetween
@@ -462,26 +419,15 @@ int DaysBetween(CashLog LateLog, CashLog EarlyLog)	//Find amount of days beetwee
 	monthsbetween = monthsbetween + (yearsbetween * 12);
 	//yearsbetween
 
-
-	//int mnthsbtwn = 4;
-
-	//string monthstring = to_string(int_to_month(currentmonth));
 	string monthstring = intmonth_to_str(currentmonth);
-	cout << "monthstring: " << monthstring << endl;
 
 	int currentyear = EarlyLog.GetYear();
 
 	Month newmonth;
 
-	//	for (int j = 0; j <= yearsbetween;++j)
-	//{ 
-	//	cout << "once";
+	
 	for (int i = 0; i <monthsbetween; ++i)
 	{
-		//cout << "totaldays" << totaldays << endl;
-		cout << Days[monthstring];
-
-
 		if (i == 0)	//if first month we must subtract days from out starting point
 		{
 			totaldays += (Days[monthstring] - EarlyLog.GetDay()); //31-8 = 23 total days
@@ -494,16 +440,13 @@ int DaysBetween(CashLog LateLog, CashLog EarlyLog)	//Find amount of days beetwee
 		if ((monthstring == "feb") && IsLeapYear(currentyear))
 			totaldays++;
 
-		cout << "totaldays" << totaldays << endl;
 		monthstring = intmonth_to_str(EarlyLog.GetMonth() + (i + 1));	//monthstring is now string of month + (iterations+1)
 																		//why can't it move from dec to jan?
 																		//cout << monthstring;
-		cout << "intmonth" << monthstring << endl;	//goes beyond 12...
 
 		if (monthstring == "jan")
 			currentyear++;
 	}
-	//}
 	//ran through up to beginning of LateLog.GetMonth()
 	totaldays += LateLog.GetDay();
 	//now we have found the days between for perfect months
@@ -513,7 +456,6 @@ int DaysBetween(CashLog LateLog, CashLog EarlyLog)	//Find amount of days beetwee
 	totaldays -= daystosubtract;
 
 	return totaldays;
-	//}
 
 }
 
@@ -522,7 +464,6 @@ void AnalyzeCashLog(vector<string>Fields, string account)	//basically parsing th
 	//calculate average daily earnings        //and then, average in a year? in a mo?	//will need to bring the value...maybe just create cash log before
 	// function call
 	stringstream ss;
-	//string st = "";
 	string month = "";
 	string day = "";
 	string year = "";
@@ -532,6 +473,7 @@ void AnalyzeCashLog(vector<string>Fields, string account)	//basically parsing th
 	double doub = 0.0;
 
 	vector<CashLog>Log;
+	vector<double>daily;
 
 	for (int i = 0; i < Fields.size(); ++i)
 	{
@@ -559,39 +501,36 @@ void AnalyzeCashLog(vector<string>Fields, string account)	//basically parsing th
 		Log[i].SetValue(doub);		//but why does it round to only use 1 decimal place?
 		convert.clear();
 
-		cout << "month " << Log[i].GetMonth() << " day " << Log[i].GetDay() << " year " << Log[i].GetYear() << endl;
-		cout << "value " << Log[i].GetValue() << endl;
+		cout << "\t" << Log[i].GetMonth() << "/" << Log[i].GetDay() << "/" << Log[i].GetYear() << ": $" << Log[i].GetValue() << endl;
 
 		ss.clear();
-	}
 
-	//so now here we have all the cash logs assembled, as well as their values
-
-
-
-	for (int i = 0; i < Log.size(); ++i)
-	{
+		///////////Calculate days between and money made per day/////////
 		if (i == 0)		//if first Log entry skip for loop iteration
+		{
+			cout << endl;
 			continue;
-
-		cout << "i== " << i << endl;
+		}
 
 
 		int daysbetween = DaysBetween(Log[i], Log[i - 1]);
 
-		cout << "There are " << daysbetween << " days between " << Log[i].GetDate() << " and " << Log[i - 1].GetDate() << endl;
+		cout << "\tDays between last log date: " << daysbetween << endl;
+		cout << "\tThe money made per day was " << Log[i].GetValue() / daysbetween << endl << endl;
+
+		daily.push_back(daysbetween);
+		///////////Calculate days between and money made per day//////////
+
 	}
 
 	//average daily
+	double sum = 0;
+	for (int i = 0; i < daily.size(); ++i)
+		sum += daily[i];
 
-
-
-	//enumerations
-	//operator overload for enums within the cashlog class
-
-	//Log[0]::jan;
-
-	//functions needed potentially: if isLeapYear(), month day overloaded operators
+	cout << "The averate money made per day is " << sum / daily.size() << endl << endl;
+		
+	return;
 
 }
 
@@ -613,26 +552,51 @@ void EditMenu(string account)
 
 		}
 
-		//FUNCTION TO LOOK AT STATS!!!! Right now can analyze Mather and Rivergate...so
-		AnalyzeCashLog(Fields, account);
+		if(Fields.size() < 1)
+		{ 
+			cout << "\nView amounts made per day? Enter 'y' or 'n'\n";
+			char ch = ' ';
 
 
+			while(cin >> ch)
+			{ 
+				switch (ch)
+				{
+				case 'y': AnalyzeCashLog(Fields, account);
+					return;
+					break;
+				case 'n': return;
+					break;
+				default: cout << "Invalid Input\n";
+				}
+			}
+
+			if (cin.eof()) //if ctrl+z entered return to main menu
+				return;
+		}
 
 		//New functionality: ask to add new Entries
+		//
+		//
+		//
+		//
 	}
 	else  //File doesn't exist, we must create based on user input
 	{
 		cout << "There is currently no cash log file for " << account << "\nCreate one? Enter 'y' or 'n'\n";
 		char ch = ' ';
-		cin >> ch;
 
-		switch (ch)
-		{
-		case 'y': CreateCashLog(account);
-			break;
-		case 'n': return;
-			break;
-		default: cout << "Invalid Input\n";
+		while(cin >> ch)
+		{ 
+			switch (ch)
+			{
+			case 'y': CreateCashLog(account);
+				return;
+				break;
+			case 'n': return;
+				break;
+			default: cout << "Invalid Input\n";
+			}
 		}
 
 		if (cin.eof()) //if ctrl+z entered return to main menu
@@ -649,9 +613,9 @@ void CreateCashLog(string account)
 	string st = "";
 	double doub = 0.0;
 
-	cout << "Please enter the date and value for new entry in seperated by whitespace\n";
+	cout << "\nPlease enter the date and value for new entry in seperated by whitespace\n";
 	cout << "Format should look like MM/DD/YYYY ####.##:\n";
-	cout << "Enter '|' twice to stop adding entries and save or Ctrl+Z to exit to main menu without saving\n";
+	cout << "Ctrl+Z to exit to main menu with or without saving\n";
 	stringstream ss;
 	string month;
 	string day;
@@ -663,10 +627,6 @@ void CreateCashLog(string account)
 
 	while (cin >> st >> doub) //terminate?
 	{
-		//cout << "Please enter the date for new entry as MM/DD/YYYY:\n";   //note: will have to detect invalid input
-		Log.push_back(account);
-
-
 		ss << st;				//put 'date value' string into stringstream ss
 
 		getline(ss, month, '/');		//get month i.e 07
@@ -675,26 +635,55 @@ void CreateCashLog(string account)
 
 		getline(ss, year, ' ');			//get year i.e. 2015
 
-		ss << month;
-		ss >> m;
-		ss << day;
-		ss >> d;
-		ss << year;
-		ss >> y;
+		d = atoi(day.c_str());
+		m = atoi(month.c_str());
+		y = atoi(year.c_str());
 
+		if (!isDate(m, d, y))
+		{
+			cout << "Invalid Date. Try again:\n";
+			cin.clear();
+		}
+		else
+		{
+		Log.push_back(account);
 		Log[Log.size() - 1].SetDate(int_to_month(m), d, y);
-
-
-		//cout << "Please enter the number value of the dated entry as numbers, eg '134.35' \n";
 		Log[Log.size() - 1].SetValue(doub);
+		}
+
+		ss.clear();
 	}
+
+	/*if (cin.eof())
+	{
+		cout << "End" << endl;
+		return;
+	}*/
 
 	if (!(cin >> st >> doub))  //if input does not follow format 'string double' then leave, ask to save or not
 	{
+		if (cin.eof())
+		{
+			if (Log.empty())
+				return;
+			cout << "Save valid entries so far? 'y' or 'n'\n";
+		}
+		else
+			cout << "Invalid Input. Reverting back to main menu...";
+
+		if (Log.empty())
+		{
+			cout << endl;
+			cin.clear();
+			cin.ignore();
+			return;
+		}
+		else
+			cout << "Save valid entries so far? 'y' or 'n'\n";
+
 		cin.clear();
 		cin.ignore();
 
-		cout << "Invalid Input. Reverting back to main menu. Save valid entries so far? 'y' or 'n'\n";
 		char ch = ' ';
 		cin >> ch;
 
@@ -707,21 +696,20 @@ void CreateCashLog(string account)
 			break;
 		default: cout << "Reverting without saving\n";	return;
 		}
-
-		//return;
 	}
 
-	if (cin.eof())
+	
+
+	if(Log.size() > 1)		//move to WriteAcntFile?
 	{
-		cout << "End" << endl;
-		return;
+		sort(Log.begin(), Log.end());
 	}
 
 
 	WriteAcntFile(account, Log, true);
 }
 
-void ViewEditAccounts()			//reduce redundancy between EditAccounts() and ViewAccounts()?
+void ViewEditAccounts()
 {
 
 	cin.clear();
