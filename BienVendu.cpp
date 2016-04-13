@@ -3,6 +3,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <map>
+#include <cstdio>
 
 using namespace std;
 
@@ -266,10 +267,8 @@ int main()
 
 	const string MAIN_PROMPT = "Enter a number to select an option: \n\t1. View/Edit Accounts\n\t2. Create New Account\nCtrl - Z to exit program\n";
 	cout << MAIN_PROMPT;
-	//Will want to merge View/Edit Accounts, no real reason to be seperate
 
 	char n = '0';
-	//cin >> n;
 
 	while (cin >> n)	//main menu input loop
 	{
@@ -298,13 +297,6 @@ int main()
 
 
 	return 0;
-}
-
-void ViewAccounts()
-{
-	
-
-	return;
 }
 
 vector<string> ParseFile(string file)
@@ -534,9 +526,100 @@ void AnalyzeCashLog(vector<string>Fields, string account)	//basically parsing th
 
 }
 
+bool DeleteAccount(string account)
+{
+	cout << "Are you sure you want to delete " << account << "? 'y' or 'n'\n";
+
+	char ch = ' ';
+
+	while (cin >> ch)
+	{
+		if (ch == 'y')
+		{
+			cout << "deleted\n";
+
+			if (remove((account + ".txt").c_str()) != 0)
+				cout << "Failed to delete " << account << endl;
+			else
+				cout << account << " deleted\n";
+
+			remove((account + ".CashLog").c_str());
+
+			//Delete entry in master account file
+			//by loading entries into vector
+			//deleting appropriate entry, rewriting to temp.txt
+			//deleting master account file, and renaming temp.txt to master account file name
+			vector<string>Fields = ParseFile(MSTR_ACNT_LIST);
+			ofstream new_master("temp.txt");
+			cout << "Fields.size()==" << Fields.size() << endl;
+			for (int i = 0; i < Fields.size(); ++i)
+			{
+				if (Fields[i] == account)
+					Fields.erase(Fields.begin()+i);
+			}
+			cout << "Fields.size()==" << Fields.size() << endl;
+
+			if (!new_master)
+			{
+				cout << "Error updating master account file\n";
+				return false;
+			}
+			else
+			{
+				for (int i = 0; i < Fields.size(); ++i)
+				{
+					if (!new_master)
+					{
+						cout << "Error updating master account file\n" << endl;
+						return false;
+					}
+					else
+					{
+						new_master << Fields[i] << endl;
+					}
+				}
+
+				new_master.close();
+				remove(MSTR_ACNT_LIST.c_str());
+				rename("temp.txt", MSTR_ACNT_LIST.c_str());
+				return true;
+			}
+
+		}
+		else if (ch == 'n')
+			return false;
+		else if (cin.eof())
+			return false;
+		else
+			cout << "Invalid Input\n";
+	}	
+}
 
 void EditMenu(string account)
 {
+	cout << "1. View/Edit/Create Cash Log File\n2. Delete Account\n";
+
+	char ch = ' ';
+
+
+	while (cin >> ch)
+	{
+		if (ch == '1')
+			break;
+		if (ch == '2')
+		{ 
+			if(DeleteAccount(account))
+				return;
+			cout << "1. View/Edit/Create Cash Log File\n2. Delete Account\n";
+		}
+		else
+			cout << "Invalid Input\n";
+	}
+
+	if (cin.eof()) //if ctrl+z entered return to main menu
+		return;
+
+
 	ifstream logfile(account + ".CashLog");
 	if (logfile)	//file already exists, we must read it
 	{
@@ -552,7 +635,7 @@ void EditMenu(string account)
 
 		}
 
-		if(Fields.size() < 1)
+		if(Fields.size() > 1)
 		{ 
 			cout << "\nView amounts made per day? Enter 'y' or 'n'\n";
 			char ch = ' ';
@@ -653,12 +736,6 @@ void CreateCashLog(string account)
 
 		ss.clear();
 	}
-
-	/*if (cin.eof())
-	{
-		cout << "End" << endl;
-		return;
-	}*/
 
 	if (!(cin >> st >> doub))  //if input does not follow format 'string double' then leave, ask to save or not
 	{
