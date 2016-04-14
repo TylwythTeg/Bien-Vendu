@@ -350,8 +350,6 @@ void BuildNewAccount()
 
 	master.close();
 
-	system("PAUSE");
-
 	//Write to new account.txt file
 	WriteAcntFile(NewAccount, true,master_exists);			//true means new account
 }
