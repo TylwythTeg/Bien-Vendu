@@ -384,7 +384,7 @@ int DaysBetween(CashLog LateLog, CashLog EarlyLog)	//Find amount of days beetwee
 	if (EarlyLog.GetDay() > LateLog.GetDay())	//like if earlylog is 3/8/2016 and latelog is 7/5/2016 (partial month)
 	{		
 		daystosubtract = EarlyLog.GetDay() - LateLog.GetDay();	//subtract these days later
-		LateLog.SetDay(EarlyLog.GetDay());							//set days to the same
+		//will act as if LateLog.GetDay==EarlyLog.GetDay
 	}
 
 	int monthsbetween = LateLog.GetMonth() - EarlyLog.GetMonth();	//4
@@ -421,7 +421,7 @@ int DaysBetween(CashLog LateLog, CashLog EarlyLog)	//Find amount of days beetwee
 			currentyear++;
 	}
 	//ran through up to beginning of LateLog.GetMonth()
-	totaldays += LateLog.GetDay();
+	totaldays += EarlyLog.GetDay();
 	//now we have found the days between for perfect months
 
 	//subtract daystosubtract
