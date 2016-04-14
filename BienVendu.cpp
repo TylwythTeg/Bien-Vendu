@@ -82,9 +82,6 @@ string intmonth_to_str(int x)
 	case 11:
 		return "nov";
 		break;
-	case 12:
-		return "dec";
-		break;
 	default: cout << "Error converting intmonth to string\n";
 	}
 }
@@ -239,20 +236,19 @@ public:
 private:
 	Date date;
 	double value;
-
-
 };
 
 //declare functions
 vector<string> ParseFile(string file);
 Account BuildAccountFromFile(string account_file);
-//void ViewAccounts();
+bool DeleteAccount(string account);
 void BuildNewAccount();
 void EditMenu(string account);
 void ViewEditAccounts();
 void CreateCashLog(string account);
 void WriteAcntFile(Account Acnt, bool isNew);
 void WriteAcntFile(string account, vector<CashLog>Log, bool isNew);
+bool AccountExists(string account);
 
 
 
@@ -342,12 +338,20 @@ void BuildNewAccount()
 {
 	//Name the account, eg "Atherton"
 	cout << "\tEnter a name for the new account\n";
-
 	string st;
-	cin >> st;
+	while(true)
+	{ 
+		cin >> st;
 
-	if (cin.eof()) //if ctrl+z entered return to main menu
-		return;
+		if (!AccountExists(st))
+			break;
+		else
+			cout << "Account already exists\n";
+		if (cin.eof()) //if ctrl+z entered return to main menu
+			return;
+	}
+
+	
 
 	Account NewAccount;
 	NewAccount.SetAccountName(st);
@@ -548,16 +552,16 @@ bool DeleteAccount(string account)
 			//Delete entry in master account file
 			//by loading entries into vector
 			//deleting appropriate entry, rewriting to temp.txt
-			//deleting master account file, and renaming temp.txt to master account file name
+			//delete master account file, and rename temp.txt to master account file name
 			vector<string>Fields = ParseFile(MSTR_ACNT_LIST);
 			ofstream new_master("temp.txt");
-			cout << "Fields.size()==" << Fields.size() << endl;
+			//cout << "Fields.size()==" << Fields.size() << endl;
 			for (int i = 0; i < Fields.size(); ++i)
 			{
 				if (Fields[i] == account)
 					Fields.erase(Fields.begin()+i);
 			}
-			cout << "Fields.size()==" << Fields.size() << endl;
+			//cout << "Fields.size()==" << Fields.size() << endl;
 
 			if (!new_master)
 			{
@@ -687,6 +691,61 @@ void EditMenu(string account)
 	}
 }
 
+bool AccountExists(string account)
+{
+	vector<string>Fields = ParseFile(MSTR_ACNT_LIST);
+
+	for (int i = 0; i < Fields.size(); ++i)
+	{
+		if (Fields[i] == account)
+			return true;
+	}
+	return false;
+}
+
+bool DateExists(int m, int d, int y, vector<CashLog> Log, string account, bool CashLogExists)
+{
+	//check if date exists either in cashlog file or previous user input
+
+	if(CashLogExists)
+	{ 
+		Vector<string>Fields = ParseFile(account + ".CashLog");
+		stringstream ss;
+		string month;
+		string day;
+		string year;
+		string value;
+
+		for (int i = 0; i < Fields.size(); ++i)	//check cashlog
+		{
+			ss << Fields[i];				//put 'date value' string into stringstream ss
+
+			getline(ss, month, '/');		//get month i.e 07
+			getline(ss, day, '/');			//get day i.e. 20
+			getline(ss, year, ' ');			//get year i.e. 2015
+			getline(ss, value, '\n');				//get value i.e. 200.50
+
+			if ((atoi(month.c_str()) == m) && (atoi(day.c_str()) == d) && (atoi(year.c_str()) == y))
+			{
+				//Found duplicate date in cashlog
+				return true;
+			}
+		}
+	}
+
+	for (int i = 0; i < Log.size(); ++i)
+	{
+		if ((Log[i].GetMonth() == m) && (Log[i].GetDay() == d) && (Log[i].GetYear() == y))
+		{
+			//found duplicate in recent user entry
+			return true;
+		}
+	}
+
+	return false;
+
+}
+
 void CreateCashLog(string account)
 {
 	vector<CashLog>Log;
@@ -727,6 +786,11 @@ void CreateCashLog(string account)
 			cout << "Invalid Date. Try again:\n";
 			cin.clear();
 		}
+		if (DateExists(m, d, y,Log,account,false))	//false means creating new cashlog
+		{
+			cout << "Date already exists\n";
+			cin.clear();
+		}
 		else
 		{
 		Log.push_back(account);
@@ -743,7 +807,7 @@ void CreateCashLog(string account)
 		{
 			if (Log.empty())
 				return;
-			cout << "Save valid entries so far? 'y' or 'n'\n";
+			//cout << "Save valid entries so far? 'y' or 'n'\n";
 		}
 		else
 			cout << "Invalid Input. Reverting back to main menu...";
