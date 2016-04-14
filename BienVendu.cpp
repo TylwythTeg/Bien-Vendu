@@ -246,16 +246,11 @@ void BuildNewAccount();
 void EditMenu(string account);
 void ViewEditAccounts();
 void CreateCashLog(string account);
-void WriteAcntFile(Account Acnt, bool isNew);
+void WriteAcntFile(Account Acnt, bool isNew, bool master_exists);
 void WriteAcntFile(string account, vector<CashLog>Log, bool isNew);
 bool AccountExists(string account);
+bool DateExists(int m, int d, int y, vector<CashLog> Log, string account, bool CashLogExists);
 
-
-
-void Test()		//just a place to test things
-{
-
-}
 
 int main()
 {
@@ -281,17 +276,7 @@ int main()
 
 		//So typing something like '42' won't have the program respond with default case followed by case '2'
 		cin.clear();
-		//cin.ignore();
 	}
-
-	cout << "\nOutside Main Menu\n\n";
-
-
-
-	system("PAUSE");
-
-
-
 	return 0;
 }
 
@@ -359,8 +344,17 @@ void BuildNewAccount()
 
 	//No. of machines for account
 	cout << "\tEnter the amount of machines this account has\n";
+
 	int n;
-	cin >> n;
+	while (!(cin >> n))
+	{
+		if (cin.eof()) //if ctrl+z entered return to main menu
+			return;
+
+		cout << "Input not an integer. Try again.\n";
+		cin.clear();
+		cin.ignore();
+	}
 
 	if (cin.eof()) //if ctrl+z entered return to main menu
 		return;
@@ -368,8 +362,20 @@ void BuildNewAccount()
 	NewAccount.SetNumOfMachines(n);
 	cout << "Number of machines for " << NewAccount.GetAccountName() << " is " << NewAccount.GetNumOfMachines() << endl;
 
+	bool master_exists;
+
+	ifstream master(MSTR_ACNT_LIST);
+	if (!master.good())
+		master_exists = false;
+	else
+		master_exists = true;
+
+	master.close();
+
+	system("PAUSE");
+
 	//Write to new account.txt file
-	WriteAcntFile(NewAccount, true);			//true means new account
+	WriteAcntFile(NewAccount, true,master_exists);			//true means new account
 }
 
 int DaysBetween(CashLog LateLog, CashLog EarlyLog)	//Find amount of days beetween two cash logs
@@ -555,13 +561,11 @@ bool DeleteAccount(string account)
 			//delete master account file, and rename temp.txt to master account file name
 			vector<string>Fields = ParseFile(MSTR_ACNT_LIST);
 			ofstream new_master("temp.txt");
-			//cout << "Fields.size()==" << Fields.size() << endl;
 			for (int i = 0; i < Fields.size(); ++i)
 			{
 				if (Fields[i] == account)
 					Fields.erase(Fields.begin()+i);
 			}
-			//cout << "Fields.size()==" << Fields.size() << endl;
 
 			if (!new_master)
 			{
@@ -632,13 +636,13 @@ void DeleteByDate(vector<string>Fields,string account)
 		getline(ss, uday, '/');			//get day i.e. 20
 		getline(ss, uyear);			//get year i.e. 2015
 
-		cout << "umonth: " << umonth << endl;
-		cout << "uday: " << uday << endl;
-		cout << "uyear: " << uyear << endl;
+		//cout << "umonth: " << umonth << endl;
+		//cout << "uday: " << uday << endl;
+		//cout << "uyear: " << uyear << endl;
 
 		for (int i = 0; i < Fields.size(); ++i)
 		{
-			cout << "Entry [" << i << "]: " << Fields[i] << endl;
+			//cout << "Entry [" << i << "]: " << Fields[i] << endl;
 
 			fs << Fields[i];
 			getline(fs, fmonth, '/');		//get month i.e 07
@@ -657,9 +661,9 @@ void DeleteByDate(vector<string>Fields,string account)
 			fd = atoi(fday.c_str());
 			fy = atoi(fyear.c_str());
 
-			cout << "fmonth: " << fm << endl;
-			cout << "fday: " << fd << endl;
-			cout << "fyear: " << fy << endl;
+			//cout << "fmonth: " << fm << endl;
+			//cout << "fday: " << fd << endl;
+			//cout << "fyear: " << fy << endl;
 
 
 			if ((um == fm) && (ud == fd) && (uy == fy))
@@ -717,6 +721,131 @@ void DeleteByDate(vector<string>Fields,string account)
 	
 }
 
+void AddEntries(vector<string>Fields, vector<CashLog> Log, string account)
+{
+	//get user date input and value
+	//check against m/d/y fields to determine if date exists
+
+	stringstream ss;
+	stringstream convert;
+	double doub;
+	string st = "";
+	string month;
+	string day;
+	string year;
+	string value;
+	int d;
+	int m;
+	int y;
+
+	cout << "Enter entries as ##/##/#### ####.##\n";
+
+	while (std::cin >> st >> doub) //terminate?
+	{
+		ss << st;				//put 'date value' string into stringstream ss
+
+		getline(ss, month, '/');		//get month i.e 07
+
+		getline(ss, day, '/');			//get day i.e. 20
+
+		getline(ss, year, ' ');			//get year i.e. 2015
+
+		d = atoi(day.c_str());
+		m = atoi(month.c_str());
+		y = atoi(year.c_str());
+
+		if (!isDate(m, d, y))
+		{
+			cout << "Invalid Date. Try again:\n";
+			std::cin.clear();
+		}
+		if (DateExists(m, d, y, Log, account, true))	//true means cashlog exists
+		{
+			cout << "Date already exists\n";
+			std::cin.clear();
+		}
+		else
+		{
+			Log.push_back(account);
+			Log[Log.size() - 1].SetDate(int_to_month(m), d, y);
+			Log[Log.size() - 1].SetValue(doub);
+		}
+
+		ss.clear();
+	}
+
+	if (!(std::cin >> st >> doub))  //if input does not follow format 'string double' then leave, ask to save or not
+	{
+		if (std::cin.eof())
+		{
+			if (Log.empty())
+				return;
+			//cout << "Save valid entries so far? 'y' or 'n'\n";
+		}
+		else
+			cout << "Invalid Input. Reverting back to main menu...";
+
+		if (Log.empty())
+		{
+			cout << endl;
+			std::cin.clear();
+			std::cin.ignore();
+			return;
+		}
+		else
+			cout << "Save valid entries so far? 'y' or 'n'\n";
+
+		std::cin.clear();
+		//cin.ignore();
+
+		char ch = ' ';
+		std::cin >> ch;
+
+		switch (ch)
+		{
+		case 'y': //yes, go ahead and write
+			if (Log.empty())	return;			//if Log vector is empty there is NOTHING TO WRITE, IGNORE USER AND RETURN TO MAIN MENU
+			break;
+		case 'n': return;
+			break;
+		default: cout << "Reverting without saving\n";	return;
+		}
+	}
+
+	for (int i = 0; i < Fields.size(); ++i)	//add cashlog stuff to log, then sort all of it
+	{
+		ss << Fields[i];				//put 'date value' string into stringstream ss
+
+		getline(ss, month, '/');		//get month i.e 07
+		getline(ss, day, '/');			//get day i.e. 20
+		getline(ss, year, ' ');			//get year i.e. 2015
+		getline(ss, value, '\n');				//get value i.e. 200.50
+
+		d = atoi(day.c_str());
+		m = atoi(month.c_str());
+		y = atoi(year.c_str());
+
+		convert << value;		//start converting string to double, put value into streamstring convert
+		convert >> doub;
+
+		Log.push_back(account);
+		Log[Log.size() - 1].SetDate(int_to_month(m), d, y);
+		Log[Log.size() - 1].SetValue(doub);
+
+		ss.clear();
+
+	}
+
+	//sort
+	if (Log.size() > 1)		//move to WriteAcntFile?
+	{
+		sort(Log.begin(), Log.end());
+	}
+
+	//write cash log
+	WriteAcntFile(account, Log, false);
+}
+
 void EditMenu(string account)
 {
 	cout << "1. View/Edit/Create Cash Log File\n2. Delete Account\n";
@@ -741,6 +870,8 @@ void EditMenu(string account)
 	if (cin.eof()) //if ctrl+z entered return to main menu
 		return;
 
+	//view/edit/create cashlog
+
 
 	ifstream logfile(account + ".CashLog");
 	if (logfile)	//file already exists, we must read it
@@ -757,8 +888,8 @@ void EditMenu(string account)
 
 		}
 
-		cout << "1. Amounts made per day\n2. Delete entry by date\n";
-
+		cout << "1. Amounts made per day\n2. Add entries\n3. Delete entry by date\n";
+		vector<CashLog> Log;
 		while (cin >> ch)
 		{
 			switch (ch)
@@ -770,7 +901,11 @@ void EditMenu(string account)
 					AnalyzeCashLog(Fields, account); 
 				return;
 				break;
-			case '2': 
+			case '2':
+				AddEntries(Fields,Log, account);
+				return;
+				break;
+			case '3': 
 				DeleteByDate(Fields, account);
 				return;
 				break;
@@ -782,37 +917,6 @@ void EditMenu(string account)
 
 		if (cin.eof()) //if ctrl+z entered return to main menu
 			return;
-
-
-		//
-		/*if(Fields.size() > 1)
-		{ 
-			cout << "\nView amounts made per day? Enter 'y' or 'n'\n";
-			char ch = ' ';
-
-
-			while(cin >> ch)
-			{ 
-				switch (ch)
-				{
-				case 'y': AnalyzeCashLog(Fields, account);
-					return;
-					break;
-				case 'n': return;
-					break;
-				default: cout << "Invalid Input\n";
-				}
-			}
-
-			if (cin.eof()) //if ctrl+z entered return to main menu
-				return;
-		}*/
-		//
-		//New functionality: ask to add new Entries
-		//
-		//
-		//
-		//
 	}
 	else  //File doesn't exist, we must create based on user input
 	{
@@ -839,6 +943,10 @@ void EditMenu(string account)
 
 bool AccountExists(string account)
 {
+
+	if (!(ifstream(MSTR_ACNT_LIST).good()))
+		return false;
+
 	vector<string>Fields = ParseFile(MSTR_ACNT_LIST);
 
 	for (int i = 0; i < Fields.size(); ++i)
@@ -1002,9 +1110,22 @@ void ViewEditAccounts()
 	cin.clear();
 	cin.ignore();
 
+	if (!(ifstream(MSTR_ACNT_LIST).good()))
+	{
+		cout << "No accounts found\n";
+		return;
+	}
+		
+
 
 	//Retrieve list of all accounts from master list
 	vector<string>accounts = ParseFile(MSTR_ACNT_LIST);
+
+	if (accounts.empty())
+	{
+		cout << "No accounts found\n";
+		return;
+	}
 
 	//Run through build and print all accounts from list
 	cout << "\nAccounts List: \n\n";
@@ -1052,6 +1173,44 @@ void ViewEditAccounts()
 void WriteAcntFile(string account, vector<CashLog>Log, bool isNew)  //For CashLog files, will want to add options append? or completely rewrite each time?
 {
 	//right now isNew always true (always writing a new cashlog)
+	const string CSH_LOG = account + ".CashLog";
+
+	//
+	if (!isNew)
+	{
+		//write to temp, delete account + ".CashLog", rename temp to account + ."CashLog"
+		ofstream new_cashlog("templog.txt");
+
+		if (!new_cashlog)
+			cout << "Failed to delete entry\n";
+		else
+		{
+			for (int i = 0; i < Log.size(); ++i)
+			{
+				new_cashlog << Log[i].GetDate() << " " << Log[i].GetValue() << "\n";
+			}
+
+			//now delete account.cashlog
+			//rename templog.txt to account.cashlog
+			if (remove((account + ".CashLog").c_str()) != 0)
+			{ 
+				cout << "Failed to update cashlog file\n" << endl;
+				return;
+			}
+			else
+			{ 
+			new_cashlog.close();
+			rename("templog.txt", CSH_LOG.c_str());
+			cout << "New entries saved\n";
+			return;
+			}
+		}
+
+	}
+
+
+
+
 
 	ofstream logfile(account + ".CashLog");
 
@@ -1070,7 +1229,7 @@ void WriteAcntFile(string account, vector<CashLog>Log, bool isNew)  //For CashLo
 			if (!logfile)
 			{
 				cout << "Error opening file\n" << endl;
-				//return; //return back to main
+				return; //return back to main
 			}
 			else
 			{
@@ -1078,13 +1237,14 @@ void WriteAcntFile(string account, vector<CashLog>Log, bool isNew)  //For CashLo
 				logfile << Log[i].GetDate() << " " << Log[i].GetValue() << "\n";
 				cout << "Entry " << i << ": " << Log[i].GetDate() << " " << Log[i].GetValue() << " saved\n";
 			}
+			cout << "Entries saved\n";
 		}
 		logfile.close();
 	}
 }
 
 
-void WriteAcntFile(Account Acnt, bool isNew)		//For Anct txt Files, will want to add options append? or completely rewrite each time?
+void WriteAcntFile(Account Acnt, bool isNew,bool master_exists)		//For Anct txt Files, will want to add options append? or completely rewrite each time?
 {
 	ofstream writer(Acnt.GetAccountName() + ".txt");
 
@@ -1104,17 +1264,36 @@ void WriteAcntFile(Account Acnt, bool isNew)		//For Anct txt Files, will want to
 		if (isNew)  //if new account append to master list
 		{
 			//Add to Master Accounts list
-			ofstream accountslist(MSTR_ACNT_LIST, ios::app);
-			if (!writer)
-			{
-				cout << "Error opening file" << endl;
-				return;
+
+			if(master_exists)
+			{ 
+				ofstream accountslist(MSTR_ACNT_LIST, ios::app);
+				if (!writer)
+				{
+					cout << "Error opening file" << endl;
+					return;
+				}
+				else
+				{
+					accountslist << Acnt.GetAccountName() << "\n";      //now saves in master list as Atherton\nRuthfield\nJohn, etc instead of Atherton.txt
+					accountslist.close();
+					cout << "Master accounts list saved\n";
+				}
 			}
 			else
 			{
-				accountslist << Acnt.GetAccountName() << "\n";      //now saves in master list as Atherton\nRuthfield\nJohn, etc instead of Atherton.txt
-				accountslist.close();
-				cout << "Master accounts list saved\n";
+				ofstream accountslist(MSTR_ACNT_LIST);
+				if (!writer)
+				{
+					cout << "Error opening file" << endl;
+					return;
+				}
+				else
+				{
+					accountslist << Acnt.GetAccountName() << "\n";      //now saves in master list as Atherton\nRuthfield\nJohn, etc instead of Atherton.txt
+					accountslist.close();
+					cout << "Master accounts list saved\n";
+				}
 			}
 		}
 	}
