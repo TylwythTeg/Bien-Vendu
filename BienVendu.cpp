@@ -599,6 +599,124 @@ bool DeleteAccount(string account)
 	}	
 }
 
+void DeleteByDate(vector<string>Fields,string account)
+{
+	cout << "Enter date as ##/##/#### to delete entry\n";
+	const string CSH_LOG = account + ".CashLog";
+
+	string st = "";
+	stringstream ss;
+	string fmonth;
+	string fday;
+	string fyear;
+
+	string umonth;
+	string uday;
+	string uyear;
+
+	int fm;
+	int fd;
+	int fy;
+
+	int um;
+	int ud;
+	int uy;
+
+	stringstream fs;
+
+	while (cin >> st)
+	{
+		
+		ss << st;						//put 'date value' string into stringstream ss
+		getline(ss, umonth, '/');		//get month i.e 07
+		getline(ss, uday, '/');			//get day i.e. 20
+		getline(ss, uyear);			//get year i.e. 2015
+
+		cout << "umonth: " << umonth << endl;
+		cout << "uday: " << uday << endl;
+		cout << "uyear: " << uyear << endl;
+
+		for (int i = 0; i < Fields.size(); ++i)
+		{
+			cout << "Entry [" << i << "]: " << Fields[i] << endl;
+
+			fs << Fields[i];
+			getline(fs, fmonth, '/');		//get month i.e 07
+			getline(fs, fday, '/');			//get day i.e. 20
+			getline(fs, fyear, ' ');			//get year i.e. 2015
+			fs.ignore(10000);
+			fs.clear();
+
+			
+
+			um = atoi(umonth.c_str());
+			ud = atoi(uday.c_str());
+			uy = atoi(uyear.c_str());
+
+			fm = atoi(fmonth.c_str());
+			fd = atoi(fday.c_str());
+			fy = atoi(fyear.c_str());
+
+			cout << "fmonth: " << fm << endl;
+			cout << "fday: " << fd << endl;
+			cout << "fyear: " << fy << endl;
+
+
+			if ((um == fm) && (ud == fd) && (uy == fy))
+			{
+				//delete entry and rewrite new cashlog
+
+				//remove Fields[i];
+				Fields.erase(Fields.begin() + i);
+
+				ofstream new_cashlog("templog.txt");
+
+				if (!new_cashlog)
+					cout << "Failed to delete entry\n";
+				else
+				{
+					if (Fields.empty())	//no entries just delete the cashlog file
+					{
+						if (remove((account + ".CashLog").c_str()))
+							cout << "Failed to delete Cash Log File\n";
+						else
+						{ 
+							cout << "Entry deleted\n";
+							cout << "Cash Log deleted\n";
+						}
+						return;
+					}
+
+
+
+					for (int i = 0; i < Fields.size(); ++i)
+					{
+						new_cashlog << Fields[i] << endl;
+					}
+
+					//now delete account.cashlog
+					//rename templog.txt to account.cashlog
+					if (remove((account + ".CashLog").c_str()) != 0)
+						cout << "Failed to delete entry\n" << endl;
+					else
+						cout << "Entry deleted\n";
+
+					new_cashlog.close();
+					rename("templog.txt", CSH_LOG.c_str());
+					return;
+				}
+			}
+
+		}
+
+		cout << "No such date found. Try again\n";
+	}
+
+	if (cin.eof())
+		return;
+	
+}
+
 void EditMenu(string account)
 {
 	cout << "1. View/Edit/Create Cash Log File\n2. Delete Account\n";
@@ -639,7 +757,35 @@ void EditMenu(string account)
 
 		}
 
-		if(Fields.size() > 1)
+		cout << "1. Amounts made per day\n2. Delete entry by date\n";
+
+		while (cin >> ch)
+		{
+			switch (ch)
+			{
+			case '1':
+				if (Fields.size() <= 1)
+					cout << "Insufficient number of entries\n";
+				else
+					AnalyzeCashLog(Fields, account); 
+				return;
+				break;
+			case '2': 
+				DeleteByDate(Fields, account);
+				return;
+				break;
+			//case 'n': return;
+				//break;
+			default: cout << "Invalid Input\n";
+			}
+		}
+
+		if (cin.eof()) //if ctrl+z entered return to main menu
+			return;
+
+
+		//
+		/*if(Fields.size() > 1)
 		{ 
 			cout << "\nView amounts made per day? Enter 'y' or 'n'\n";
 			char ch = ' ';
@@ -660,8 +806,8 @@ void EditMenu(string account)
 
 			if (cin.eof()) //if ctrl+z entered return to main menu
 				return;
-		}
-
+		}*/
+		//
 		//New functionality: ask to add new Entries
 		//
 		//
@@ -823,7 +969,7 @@ void CreateCashLog(string account)
 			cout << "Save valid entries so far? 'y' or 'n'\n";
 
 		cin.clear();
-		cin.ignore();
+		//cin.ignore();
 
 		char ch = ' ';
 		cin >> ch;
