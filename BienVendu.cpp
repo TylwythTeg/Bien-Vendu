@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <map>
 #include <cstdio>
+#include <tuple> 
 
 using namespace std;
 
@@ -16,7 +17,7 @@ void menuCreateCashLog(string account);
 void menuEditCashLog(string account);
 void menuAddEntries(string account);
 void menuMain();
-bool menuDeleteAccount(string account);
+void menuDeleteAccount(string account);
 void menuDeleteByDate(string account);
 void askToCreate();
 void askForAccount();
@@ -34,12 +35,14 @@ void printAccounts();
 void printLogs(string account);
 void analyzeCashLog(string account);
 int daysBetween(CashLog lateLog, CashLog earlyLog);
-bool deleteAccount(string account);
-bool removeFromMaster(string account);
+void deleteAccount(string account);
+void deleteLogEntry(int m,int d,int y, Log);
+void removeFromMaster(string account);
 void writeAccountFile(Account newAccount);
 void writeLogFile(string account, vector<CashLog>Log);
 void writeMasterFile(string accountName);
 vector<string> parseFile(string file);
+tuple<int, int, int, double>getLogFromString(string st);
 
 
 int main()
@@ -78,16 +81,9 @@ void viewEditAccounts()
 	cin.clear();
 	cin.ignore();
 
-	if (!masterFile())
+	if ( !masterFile() || !accounts() )
 	{
-		cout << "No accounts found\n";
-		askToCreate();
-		return;
-	}
-
-	if (!accounts())
-	{
-		cout << "No accounts found \n";
+		cout << "There were no accounts found\n";
 		askToCreate();
 		return;
 	}
@@ -120,7 +116,7 @@ void askToCreate()
 	return;
 }
 
-bool menuDeleteAccount(string account)
+void menuDeleteAccount(string account)
 {
 	cout << "Are you sure you want to delete " << account << "? 'y' or 'n'\n";
 
@@ -129,17 +125,10 @@ bool menuDeleteAccount(string account)
 	while (cin >> ch)
 	{
 		if (ch == 'y')
-		{
-			if (deleteAccount(account))
-				return true;
-			else
-				return false;
+			deleteAccount(account);
 
-		}
-		else if (ch == 'n')
-			return false;
-		else if (cin.eof())
-			return false;
+		else if (ch == 'n' || cin.eof())
+			return;
 		else
 			cout << "Invalid Input\n";
 	}
@@ -191,10 +180,15 @@ void menuNewAccount() {
 	{
 		cin >> st;
 
-		if (!account(st))
+		if (!account(st) && st != "new")	//create function for case neutrality
 			break;
+		else if (st == "new")
+		{
+			cout << "Invalid name\n";
+		}
 		else
 			cout << "Account already exists\n";
+
 		if (cin.eof()) //if ctrl+z entered return to main menu
 			return;
 	}
@@ -242,9 +236,8 @@ void menuEditAccount(string account)
 		}
 		if (ch == '2')
 		{
-			if (menuDeleteAccount(account))
-				return;
-			cout << "1. View/Edit/Create Cash Log File\n2. Delete Account\n";
+			menuDeleteAccount(account);
+			return;
 		}
 		else
 			cout << "Invalid Input\n";
@@ -260,41 +253,27 @@ void menuCreateCashLog(string account)
 
 	//will want to sort by date before saving to .cashlog file and printing results
 
-	string st = "";
-	double doub = 0.0;
-
 	cout << "\nPlease enter the date and value for new entry in seperated by whitespace\n";
 	cout << "Format should look like MM/DD/YYYY ####.##:\n";
 	cout << "Ctrl+Z to exit to main menu with or without saving\n";
-	stringstream ss;
-	string month;
-	string day;
-	string year;
 
-	int m;
-	int d;
-	int y;
-
+	int m, d, y;
+	string st = "";
+	double doub = 0.0;
 	while (cin >> st >> doub) //terminate?
 	{
-		ss << st;				//put 'date value' string into stringstream ss
+		tuple<int, int, int, double> tupleLog = getLogFromString(st);
 
-		getline(ss, month, '/');		//get month i.e 07
-
-		getline(ss, day, '/');			//get day i.e. 20
-
-		getline(ss, year, ' ');			//get year i.e. 2015
-
-		d = atoi(day.c_str());
-		m = atoi(month.c_str());
-		y = atoi(year.c_str());
+		d = get<0>(tupleLog);
+		m = get<1>(tupleLog);
+		y = get<2>(tupleLog);
 
 		if (!isDate(m, d, y))
 		{
 			cout << "Invalid Date. Try again:\n";
 			cin.clear();
 		}
-		if (logDateExists(m, d, y, Log))	//false means creating new cashlog
+		if (logDateExists(m, d, y, Log))
 		{
 			cout << "Date already exists\n";
 			cin.clear();
@@ -306,7 +285,6 @@ void menuCreateCashLog(string account)
 			Log[Log.size() - 1].SetValue(doub);
 		}
 
-		ss.clear();
 	}
 
 	if (!(cin >> st >> doub))  //if input does not follow format 'string double' then leave, ask to save or not
@@ -414,58 +392,41 @@ void menuAddEntries(string account)
 {
 	//get user date input and value
 	//check against m/d/y fields to determine if date exists
-	stringstream ss;
-	string month;
-	string day;
-	string year;
-	string value;
-	string st = "";
-	stringstream convert;
-	double doub;
+	double value;
 	
 	//entries from upcoming user input
 	vector<CashLog> Log;
+	int m, d, y;
 
-	//entries in logfile
+
+	//Store entries both from user input and those existing in logfile in cashlog vector
 	vector<string>fields = parseFile(account + ".CashLog");
-	//place all entries from both sources into vector
 	for (int i = 0; i < fields.size; ++i)
 	{
-		ss << fields[i];				//put 'date value' string into stringstream ss
-		getline(ss, month, '/');		//get month i.e 07
-		getline(ss, day, '/');			//get day i.e. 20
-		getline(ss, year, ' ');			//get year i.e. 2015
-		getline(ss, value, '\n');				//get value i.e. 200.50
+		tuple<int, int, int, double> tupleLog = getLogFromString(fields[i]);
+		m = get<0>(tupleLog);
+		d = get<1>(tupleLog);
+		y = get<2>(tupleLog);
+		value = get<3>(tupleLog);
 
-		convert << value;		//converting string to double, put value into streamstring convert
-		convert >> doub;
-
-		Log[i].setValue(doub);
+		Log[i].setValue(value);
 
 
 		Log.push_back(account);
-		Log[i].setDate(int_to_month(atoi(month.c_str())), atoi(day.c_str()), atoi(year.c_str()));
-
-		convert.clear();
-		ss.clear();
+		Log[i].setDate(int_to_month(m), d, y);
 	}
-	
-	int d;
-	int m;
-	int y;
 
 	cout << "Enter entries as ##/##/#### ####.##\n";
 
+	string st;
+	double doub;
 	while (std::cin >> st >> doub) //terminate?
-	{
-		ss << st;				//put 'date value' string into stringstream ss
-		getline(ss, month, '/');		//get month i.e 07
-		getline(ss, day, '/');			//get day i.e. 20
-		getline(ss, year, ' ');			//get year i.e. 2015
+	{	
+		tuple<int, int, int, double> tupleLog = getLogFromString(st);
 
-		d = atoi(day.c_str());
-		m = atoi(month.c_str());
-		y = atoi(year.c_str());
+		d = get<0>(tupleLog);
+		m = get<1>(tupleLog);
+		y = get<2>(tupleLog);
 
 		if (!isDate(m, d, y))
 		{
@@ -483,8 +444,6 @@ void menuAddEntries(string account)
 			Log[Log.size() - 1].SetDate(int_to_month(m), d, y);
 			Log[Log.size() - 1].SetValue(doub);
 		}
-
-		ss.clear();
 	}
 
 	if (!(std::cin >> st >> doub))  //if input does not follow format 'string double' then leave, ask to save or not
@@ -664,41 +623,27 @@ void analyzeCashLog(string account)
 {
 	//calculate average daily earnings        
 	//and then total average
-	stringstream ss;
-	string month = "";
-	string day = "";
-	string year = "";
-	string value = "";
-
-	stringstream convert;
-	double doub = 0.0;
 
 	vector<CashLog>Log;
-	vector<double>daily;
 	vector<string>fields = parseFile(account + ".CashLog");
+	int m, d, y;
+	double value;
 
 	for (int i = 0; i < fields.size(); ++i)
 	{
-		ss << fields[i];				//put 'date value' string into stringstream ss
-		getline(ss, month, '/');		//get month i.e 07
-		getline(ss, day, '/');			//get day i.e. 20
-		getline(ss, year, ' ');			//get year i.e. 2015
-		getline(ss, value, '\n');				//get value i.e. 200.50
-												//cout << "value == " << value << endl;
+		tuple<int, int, int, double> tupleLog = getLogFromString(fields[i]);
+		m = get<0>(tupleLog);
+		d = get<1>(tupleLog);
+		y = get<2>(tupleLog);
+		value = get<3>(tupleLog);
 
-												//Log.push_back(CashLog(account));		//before would create cash log with arbitrary date string, but lets create empty nextline
+
 		Log.push_back(account);
-		Log[i].setDate(int_to_month(atoi(month.c_str())), atoi(day.c_str()), atoi(year.c_str()));
+		Log[i].setDate(int_to_month(m), d, y);		
 
-		convert << value;		//converting string to double, put value into streamstring convert
-		convert >> doub;		
-
-		Log[i].setValue(doub);	
-		convert.clear();
+		Log[i].setValue(value);
 
 		cout << "\t" << Log[i].getMonth() << "/" << Log[i].getDay() << "/" << Log[i].getYear() << ": $" << Log[i].getValue() << endl;
-
-		ss.clear();
 
 		///////////Calculate days between and money made per day/////////
 		if (i == 0)		//if first Log entry skip for loop iteration
@@ -717,11 +662,12 @@ void analyzeCashLog(string account)
 	}
 
 	//average daily
+	vector<double>dailyValue;
 	double sum = 0;
-	for (int i = 0; i < daily.size(); ++i)
-		sum += daily[i];
+	for (int i = 0; i < dailyValue.size(); ++i)
+		sum += dailyValue[i];
 
-	cout << "The average money made per day is " << sum / daily.size() << endl << endl;
+	cout << "The average money made per day is " << sum / dailyValue.size() << endl << endl;
 
 	return;
 }
@@ -799,19 +745,73 @@ int daysBetween(CashLog lateLog, CashLog earlyLog)	//Find amount of days beetwee
 	return totaldays;
 }
 
-bool deleteAccount(string account)
+void deleteAccount(string account)
 {
-	if (remove((account + ".txt").c_str()) != 0)
-		cout << "Failed to delete " << account << endl;
+	if (remove((account + ".txt").c_str()) != 0) 
+	{
+	 
+		cout << "Failed to delete " << account << "..." << endl;
+		return;
+	}
 	else
-		cout << account << " deleted\n";
+		cout << account << " file deleted\n";
 
 	remove((account + ".CashLog").c_str());
 
-	if (removeFromMaster(account))
-		return true;
-	else
-		return false;
+	removeFromMaster(account);
+}
+
+void deleteLogEntry(int m,int d,int y, Log)
+{
+	const string CSH_LOG = Log.GetAccountName() + ".CashLog";
+	vector<string>fields = parseFile(CSH_LOG);
+
+	for (int i = 0; i < Log.size(); ++i)
+	{
+		if ((Log[i].getMonth() == m) && (Log[i].getDay() == d) && (Log[i].getYear() == y))
+		{
+			//found duplicate in log vector
+			ofstream new_cashlog("templog.txt");
+
+			if (!new_cashlog)
+			{
+				cout << "Failed to delete entry\n";
+				return;
+			}
+			
+			vector<string>fields = parseFile(CSH_LOG);
+			if (fields.empty())	//no entries just delete the cashlog file
+			{
+				if (remove((CSH_LOG).c_str()))
+					cout << "Failed to delete Cash Log File\n";
+				else
+				{
+					cout << "Entry deleted\n";
+					cout << "Cash Log deleted\n";
+				}
+				return;
+			}
+
+			for (int i = 0; i < fields.size(); ++i)
+			{
+				new_cashlog << fields[i] << endl;
+			}
+
+			//now delete account.cashlog
+			//rename templog.txt to account.cashlog
+			if (remove((CSH_LOG).c_str()) != 0)
+				cout << "Failed to delete entry\n" << endl;
+			else
+				cout << "Entry deleted\n";
+
+			new_cashlog.close();
+			rename("templog.txt", CSH_LOG.c_str());
+			return;
+			
+		}
+	}
+
+
 }
 
 void menuDeleteByDate(string account)
@@ -819,94 +819,43 @@ void menuDeleteByDate(string account)
 	cout << "Enter date as ##/##/#### to delete entry\n";
 	const string CSH_LOG = account + ".CashLog";
 
+	vector<CashLog>Log;
+	int m, d, y;
+	double value;
+
+	//Store entries both from user input and those existing in logfile in cashlog vector
 	vector<string>fields = parseFile(CSH_LOG);
+	for (int i = 0; i < fields.size; ++i)
+	{
+		tuple<int, int, int, double> tupleLog = getLogFromString(fields[i]);
+		m = get<0>(tupleLog);
+		d = get<1>(tupleLog);
+		y = get<2>(tupleLog);
+		value = get<3>(tupleLog);
 
-	string st = "";
-	stringstream ss;
-	string fmonth;
-	string fday;
-	string fyear;
+		Log[i].setValue(value);
 
-	string umonth;
-	string uday;
-	string uyear;
 
-	int fm;
-	int fd;
-	int fy;
+		Log.push_back(account);
+		Log[i].setDate(int_to_month(m), d, y);
+	}
 
-	int um;
-	int ud;
-	int uy;
-
-	stringstream fs;
-
+	string st;
 	while (cin >> st)
 	{
+		if (cin.eof())
+			return;
 
-		ss << st;						//put 'date value' string into stringstream ss
-		getline(ss, umonth, '/');		//get month i.e 07
-		getline(ss, uday, '/');			//get day i.e. 20
-		getline(ss, uyear);			//get year i.e. 2015
+		tuple<int, int, int, double> inputDate = getLogFromString(st);
 
-		for (int i = 0; i < fields.size(); ++i)
+		m = get<0>(inputDate);
+		d = get<1>(inputDate);
+		y = get<2>(inputDate);
+
+		if (logDateExists(m, d, y, Log))
 		{
-			fs << fields[i];
-			getline(fs, fmonth, '/');		//get month i.e 07
-			getline(fs, fday, '/');			//get day i.e. 20
-			getline(fs, fyear, ' ');			//get year i.e. 2015
-			fs.ignore(10000);
-			fs.clear();
-
-			um = atoi(umonth.c_str());
-			ud = atoi(uday.c_str());
-			uy = atoi(uyear.c_str());
-
-			fm = atoi(fmonth.c_str());
-			fd = atoi(fday.c_str());
-			fy = atoi(fyear.c_str());
-
-			if ((um == fm) && (ud == fd) && (uy == fy))
-			{
-				//delete entry and rewrite new cashlog
-				fields.erase(fields.begin() + i);
-
-				ofstream new_cashlog("templog.txt");
-
-				if (!new_cashlog)
-					cout << "Failed to delete entry\n";
-				else
-				{
-					if (fields.empty())	//no entries just delete the cashlog file
-					{
-						if (remove((account + ".CashLog").c_str()))
-							cout << "Failed to delete Cash Log File\n";
-						else
-						{
-							cout << "Entry deleted\n";
-							cout << "Cash Log deleted\n";
-						}
-						return;
-					}
-
-					for (int i = 0; i < fields.size(); ++i)
-					{
-						new_cashlog << fields[i] << endl;
-					}
-
-					//now delete account.cashlog
-					//rename templog.txt to account.cashlog
-					if (remove((account + ".CashLog").c_str()) != 0)
-						cout << "Failed to delete entry\n" << endl;
-					else
-						cout << "Entry deleted\n";
-
-					new_cashlog.close();
-					rename("templog.txt", CSH_LOG.c_str());
-					return;
-				}
-			}
-
+			deleteLogEntry(m, d, y, Log);
+			return;
 		}
 
 		cout << "No such date found. Try again\n";
@@ -917,7 +866,7 @@ void menuDeleteByDate(string account)
 
 }
 
-bool removeFromMaster(string account)
+void removeFromMaster(string account)
 {
 	/*
 	Delete entry in master account file
@@ -936,28 +885,25 @@ bool removeFromMaster(string account)
 
 	if (!new_master)
 	{
-		cout << "Error updating master account file. Account not deleted.\n";
-		return false;
+		cout << "Error updating master account file. Account not fully deleted.\n";
+		return;
 	}
-	else
+
+	for (int i = 0; i < fields.size(); ++i)
 	{
-		for (int i = 0; i < fields.size(); ++i)
+		if (!new_master)
 		{
-			if (!new_master)
-			{
-				cout << "Error updating master account file. Account not deleted.\n" << endl;
-				return false;
-			}
-			else
-			{
-				new_master << fields[i] << endl;
-			}
+			cout << "Error updating master account file. Account not deleted.\n" << endl;
+			return;
 		}
-		new_master.close();
-		remove(MSTR_ACNT_LIST.c_str());
-		rename("temp.txt", MSTR_ACNT_LIST.c_str());
-		return true;
+		else
+		{
+			new_master << fields[i] << endl;
+		}
 	}
+	new_master.close();
+	remove(MSTR_ACNT_LIST.c_str());
+	rename("temp.txt", MSTR_ACNT_LIST.c_str());
 }
 
 void writeAccountFile(Account newAccount)
@@ -1118,5 +1064,32 @@ vector<string> parseFile(string file)
 
 }
 
+tuple<int, int, int, double>getLogFromString(string st)
+{
+	//until change to just date functions will ignore double as they desire
+	double value = 0.0;
 
+	stringstream ss;
+	stringstream convert;
+	string month;
+	string day;
+	string year;
+	string val;
 
+	ss << st;				
+
+	getline(ss, month, '/');		
+	getline(ss, day, '/');			
+	getline(ss, year, ' ');			
+	getline(ss, val, '\n');				
+
+	convert << val;		
+	convert >> value;
+
+	int d = atoi(day.c_str());
+	int m = atoi(month.c_str());
+	int y = atoi(year.c_str());
+
+	return make_tuple(m, d, y, value);
+
+}
