@@ -27,6 +27,7 @@ bool cashLogFile(string account);
 bool masterFile();
 bool accounts();
 bool isDate(int m, int d, int y);
+bool leapYear(int year);
 bool logDateExists(int m, int d, int y, vector<CashLog> Log);
 Account buildAccountFromFile(string account);
 void printAccounts();
@@ -593,6 +594,23 @@ bool isDate(int m, int d, int y)
 	return false;
 }
 
+bool leapYear(int year)
+{
+	if (year % 4 == 0)
+	{
+		if (year % 100 == 0)
+		{
+			if (year % 400 == 0)
+			{
+				return true;
+			}
+			return false;
+		}
+		return true;
+	}
+	return false;
+}
+
 bool logDateExists(int m, int d, int y, vector<CashLog> Log)
 {
 	for (int i = 0; i < Log.size(); ++i)
@@ -1099,3 +1117,6 @@ vector<string> parseFile(string file)
 	}
 
 }
+
+
+
