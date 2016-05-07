@@ -5,6 +5,7 @@
 #include <map>
 #include <cstdio>
 #include <tuple> 
+#include "Account.h"
 
 using namespace std;
 
@@ -27,22 +28,23 @@ bool account(string account);
 bool cashLogFile(string account);
 bool masterFile();
 bool accounts();
-bool isDate(int m, int d, int y);
+bool isDate(Date date);
 bool leapYear(int year);
-bool logDateExists(int m, int d, int y, vector<CashLog> Log);
-Account buildAccountFromFile(string account);
+bool logDateExists(Date date, vector<Log> log);
+Account buildAccountFromFile(string file);
 void printAccounts();
 void printLogs(string account);
 void analyzeCashLog(string account);
-int daysBetween(CashLog lateLog, CashLog earlyLog);
+int daysBetween(Log lateLog, Log earlyLog);
 void deleteAccount(string account);
-void deleteLogEntry(int m,int d,int y, Log);
+void deleteLogEntry(Log userEntry);
 void removeFromMaster(string account);
 void writeAccountFile(Account newAccount);
-void writeLogFile(string account, vector<CashLog>Log);
+void writeLogFile(string account, vector<Log>Log);
 void writeMasterFile(string accountName);
 vector<string> parseFile(string file);
-tuple<int, int, int, double>getLogFromString(string st);
+Log getEntryFromString(string st);
+vector<Log> getEntriesFromFile(string file);
 
 
 int main()
@@ -193,9 +195,8 @@ void menuNewAccount() {
 			return;
 	}
 
-	Account newAccount;
-	newAccount.setAccountName(st);
-	cout << "New Account Name is " << newAccount.getAccountName() << endl;
+	Account newAccount(st);
+	cout << "New Account Name is " << newAccount.getName() << endl;
 	
 	//No. of machines for account
 	cout << "\tEnter the amount of machines this account has\n";
@@ -215,9 +216,9 @@ void menuNewAccount() {
 		return;
 
 	newAccount.setNumOfMachines(n);
-	cout << "Number of machines for " << newAccount.getAccountName() << " is " << newAccount.getNumOfMachines() << endl;
+	cout << "Number of machines for " << newAccount.getName() << " is " << newAccount.getNumOfMachines() << endl;
 
-	void writeAccountFile(newAccount);
+	writeAccountFile(newAccount);
 }
 
 void menuEditAccount(string account)
@@ -249,9 +250,7 @@ void menuEditAccount(string account)
 
 void menuCreateCashLog(string account)
 {
-	vector<CashLog>Log;
-
-	//will want to sort by date before saving to .cashlog file and printing results
+	vector<Log>log;
 
 	cout << "\nPlease enter the date and value for new entry in seperated by whitespace\n";
 	cout << "Format should look like MM/DD/YYYY ####.##:\n";
@@ -262,28 +261,20 @@ void menuCreateCashLog(string account)
 	double doub = 0.0;
 	while (cin >> st >> doub) //terminate?
 	{
-		tuple<int, int, int, double> tupleLog = getLogFromString(st);
+		Log userEntry = getEntryFromString(st);
 
-		d = get<0>(tupleLog);
-		m = get<1>(tupleLog);
-		y = get<2>(tupleLog);
-
-		if (!isDate(m, d, y))
+		if (!isDate(userEntry.getDate()))
 		{
 			cout << "Invalid Date. Try again:\n";
 			cin.clear();
 		}
-		if (logDateExists(m, d, y, Log))
+		else if (logDateExists(userEntry.getDate(), log))
 		{
 			cout << "Date already exists\n";
 			cin.clear();
 		}
 		else
-		{
-			Log.push_back(account);
-			Log[Log.size() - 1].SetDate(int_to_month(m), d, y);
-			Log[Log.size() - 1].SetValue(doub);
-		}
+			log.push_back(userEntry);
 
 	}
 
@@ -291,13 +282,13 @@ void menuCreateCashLog(string account)
 	{
 		if (cin.eof())
 		{
-			if (Log.empty())
+			if (log.empty())
 				return;
 		}
 		else
 			cout << "Invalid Input. Reverting back to main menu...";
 
-		if (Log.empty())
+		if (log.empty())
 		{
 			cout << endl;
 			cin.clear();
@@ -314,16 +305,17 @@ void menuCreateCashLog(string account)
 
 		switch (ch)
 		{
-		case 'y': //yes, go ahead and write
-			if (Log.empty())	return;			//if Log vector is empty there is NOTHING TO WRITE, IGNORE USER AND RETURN TO MAIN MENU
+		case 'y':
+			writeLogFile(account, log);
 			break;
-		case 'n': return;
+		case 'n': 
+			return;
 			break;
 		default: cout << "Reverting without saving\n";	return;
 		}
 	}
 
-	writeLogFile(account, Log);
+	
 }
 
 void menuEditCashLog(string account)
@@ -332,10 +324,9 @@ void menuEditCashLog(string account)
 	{
 		printLogs(account);
 
-		vector<string>fields = parseFile(account + ".CashLog");////////////////
+		vector<string>fields = parseFile(account + ".CashLog");
 
 		cout << "1. Amounts made per day\n2. Add entries\n3. Delete entry by date\n";
-		//vector<CashLog> Log;//////////////////
 		char ch = ' ';
 		while (cin >> ch)
 		{
@@ -356,8 +347,6 @@ void menuEditCashLog(string account)
 				menuDeleteByDate(account);
 				return;
 				break;
-				//case 'n': return;
-				//break;
 			default: cout << "Invalid Input\n";
 			}
 		}
@@ -374,10 +363,11 @@ void menuEditCashLog(string account)
 		{
 			switch (ch)
 			{
-			case 'y': createCashLog(account);
+			case 'y': menuCreateCashLog(account);
 				return;
 				break;
-			case 'n': return;
+			case 'n': 
+				return;
 				break;
 			default: cout << "Invalid Input\n";
 			}
@@ -392,71 +382,46 @@ void menuAddEntries(string account)
 {
 	//get user date input and value
 	//check against m/d/y fields to determine if date exists
-	double value;
 	
-	//entries from upcoming user input
-	vector<CashLog> Log;
-	int m, d, y;
 
-
-	//Store entries both from user input and those existing in logfile in cashlog vector
-	vector<string>fields = parseFile(account + ".CashLog");
-	for (int i = 0; i < fields.size; ++i)
-	{
-		tuple<int, int, int, double> tupleLog = getLogFromString(fields[i]);
-		m = get<0>(tupleLog);
-		d = get<1>(tupleLog);
-		y = get<2>(tupleLog);
-		value = get<3>(tupleLog);
-
-		Log[i].setValue(value);
-
-
-		Log.push_back(account);
-		Log[i].setDate(int_to_month(m), d, y);
-	}
+	vector<Log> log = getEntriesFromFile(account + ".CashLog");
 
 	cout << "Enter entries as ##/##/#### ####.##\n";
 
 	string st;
-	double doub;
-	while (std::cin >> st >> doub) //terminate?
-	{	
-		tuple<int, int, int, double> tupleLog = getLogFromString(st);
+	double value;
+	while (std::cin >> st >> value) //terminate?
+	{
+		Log userEntry = getEntryFromString(st);
+		userEntry.setValue(value);
 
-		d = get<0>(tupleLog);
-		m = get<1>(tupleLog);
-		y = get<2>(tupleLog);
-
-		if (!isDate(m, d, y))
+		if (!isDate(userEntry.getDate()))
 		{
 			cout << "Invalid Date. Try again:\n";
 			std::cin.clear();
 		}
-		if (logDateExists(m, d, y,Log))	//true means cashlog exists
+		if (logDateExists(userEntry.getDate(),log))	//true means cashlog exists
 		{
 			cout << "Date already exists\n";
 			std::cin.clear();
 		}
 		else
 		{
-			Log.push_back(account);
-			Log[Log.size() - 1].SetDate(int_to_month(m), d, y);
-			Log[Log.size() - 1].SetValue(doub);
+			log.push_back(userEntry);
 		}
 	}
 
-	if (!(std::cin >> st >> doub))  //if input does not follow format 'string double' then leave, ask to save or not
+	if (!(std::cin >> st >> value))  //if input does not follow format 'string double' then leave, ask to save or not
 	{
 		if (std::cin.eof())
 		{
-			if (Log.empty())
+			if (log.empty())
 				return;
 		}
 		else
 			cout << "Invalid Input. Reverting back to main menu...";
 
-		if (Log.empty())
+		if (log.empty())
 		{
 			cout << endl;
 			std::cin.clear();
@@ -473,17 +438,15 @@ void menuAddEntries(string account)
 
 		switch (ch)
 		{
-		case 'y': //yes, go ahead and write
-			if (Log.empty())	return;			//if Log vector is empty there is NOTHING TO WRITE, IGNORE USER AND RETURN TO MAIN MENU
+		case 'y':
+			writeLogFile(account, log);			
 			break;
-		case 'n': return;
+		case 'n':
+			return;
 			break;
 		default: cout << "Reverting without saving\n";	return;
 		}
 	}
-
-	//write cash log
-	writeLogFile(account, Log);
 }
 
 //util
@@ -497,11 +460,9 @@ bool masterFile()
 }
 bool account(string account)
 {
-	//check if master file exists
-	if (!(ifstream(MSTR_ACNT_LIST).good()))
+	if (!masterFile())
 		return false;
 
-	//check file fields
 	vector<string>fields = parseFile(MSTR_ACNT_LIST);
 
 	for (int i = 0; i < fields.size(); ++i)
@@ -514,7 +475,6 @@ bool account(string account)
 
 bool cashLogFile(string account)
 {
-	//does logfile exist?
 	ifstream logfile(account + ".CashLog");
 	if (logfile)	
 		return true;
@@ -527,30 +487,45 @@ bool accounts()
 	vector<string>accounts = parseFile(MSTR_ACNT_LIST);
 
 	if (accounts.empty())
-	{
 		return false;
-	}
 
 	return true;
 }
 
-bool isDate(int m, int d, int y)
+bool isDate(Date date)
 {
-	if (m >= 1 && m <= 12)
+
+	switch (date.month)
 	{
-		if (d <= 31 && d >= 1)
-		{
-			if ((m == 2 && d <= 28) || (m == 2 && d == 29 && leapYear(y)))
+		case 1:
+		case 3:
+		case 5:
+		case 7:
+		case 8:
+		case 10:
+		case 12:
+			if (date.day >= 1 && date.day <= 31)
 				return true;
-
-			if (m == 1 || m == 3 || m == 5 || m == 7 || m == 8 || m == 10 || m == 12)
+			return false;
+			break;
+		case 4:
+		case 6:
+		case 9:
+		case 11:
+			if (date.day >= 1 && date.day <= 30)
 				return true;
-
-			if ((m == 4 || m == 6 || m == 9 || m == 11) && d <= 30)
+			return false;
+			break;
+		case 2:
+			if ( (date.day <= 28) || ( date.day == 29 && leapYear(date.year) ) )
 				return true;
-		}
+			return false;
+			break;
+		default:
+			return false;
+			break;
 	}
-	return false;
+
 }
 
 bool leapYear(int year)
@@ -570,25 +545,22 @@ bool leapYear(int year)
 	return false;
 }
 
-bool logDateExists(int m, int d, int y, vector<CashLog> Log)
+bool logDateExists(Date date, vector<Log> log) //dateExistsInLog logEntryExists
 {
-	for (int i = 0; i < Log.size(); ++i)
+
+	for (int i = 0; i < log.size(); ++i)
 	{
-		if ((Log[i].getMonth() == m) && (Log[i].getDay() == d) && (Log[i].getYear() == y))
-		{
-			//found duplicate in log vector
+		if ((log[i].getMonth() == date.month) && (log[i].getDay() == date.day) && (log[i].getYear() == date.year))
 			return true;
-		}
 	}
 	return false;
 }
 
-Account buildAccountFromFile(string account)
+Account buildAccountFromFile(string file)
 {
-	Vector<string>fields = parseFile(account);
+	Vector<string>fields = parseFile(file);
 
-	Account acnt;
-	acnt.setAccountName(fields[0]);
+	Account acnt(fields[0]);
 	acnt.setNumOfMachines(atoi(fields[1].c_str()));
 	return acnt;
 }
@@ -602,7 +574,7 @@ void printAccounts()
 	for (int i = 0; i < accounts.size(); ++i)
 	{
 		Account acnt = buildAccountFromFile(accounts[i] + ".txt");  //Build account from .txt...for instance one loop pass through will build Atherton from Atherton.txt
-		cout << "\t" << acnt.getAccountName() << " has " << acnt.getNumOfMachines() << " machines\n";
+		cout << "\t" << acnt.getName() << " has " << acnt.getNumOfMachines() << " machines\n";
 	}
 
 	cout << endl;
@@ -624,26 +596,18 @@ void analyzeCashLog(string account)
 	//calculate average daily earnings        
 	//and then total average
 
-	vector<CashLog>Log;
+	vector<Log>log;
 	vector<string>fields = parseFile(account + ".CashLog");
 	int m, d, y;
 	double value;
-
+	vector<double>dailyValue;
 	for (int i = 0; i < fields.size(); ++i)
 	{
-		tuple<int, int, int, double> tupleLog = getLogFromString(fields[i]);
-		m = get<0>(tupleLog);
-		d = get<1>(tupleLog);
-		y = get<2>(tupleLog);
-		value = get<3>(tupleLog);
+		Log entry = getEntryFromString(fields[i]);
 
+		log.push_back(entry);
 
-		Log.push_back(account);
-		Log[i].setDate(int_to_month(m), d, y);		
-
-		Log[i].setValue(value);
-
-		cout << "\t" << Log[i].getMonth() << "/" << Log[i].getDay() << "/" << Log[i].getYear() << ": $" << Log[i].getValue() << endl;
+		cout << "\t" << log[i].getMonth() << "/" << log[i].getDay() << "/" << log[i].getYear() << ": $" << log[i].getValue() << endl;
 
 		///////////Calculate days between and money made per day/////////
 		if (i == 0)		//if first Log entry skip for loop iteration
@@ -652,17 +616,17 @@ void analyzeCashLog(string account)
 			continue;
 		}
 
-		int daysbetween = daysBetween(Log[i], Log[i - 1]);
+		int daysbetween = daysBetween(log[i], log[i - 1]);
 
 		cout << "\tDays between last log date: " << daysbetween << endl;
-		cout << "\tThe money made per day was " << Log[i].getValue() / daysbetween << endl << endl;
+		cout << "\tThe money made per day was " << log[i].getValue() / daysbetween << endl << endl;
 
-		daily.push_back(daysbetween);
+		dailyValue.push_back(daysbetween);
 		///////////Calculate days between and money made per day//////////
 	}
 
 	//average daily
-	vector<double>dailyValue;
+	
 	double sum = 0;
 	for (int i = 0; i < dailyValue.size(); ++i)
 		sum += dailyValue[i];
@@ -672,7 +636,7 @@ void analyzeCashLog(string account)
 	return;
 }
 
-int daysBetween(CashLog lateLog, CashLog earlyLog)	//Find amount of days beetween two cash logs
+int daysBetween(Log lateLog, Log earlyLog)	//Find amount of days beetween two cash logs
 {
 	int daystosubtract = 0;
 	int totaldays = 0;
@@ -761,16 +725,20 @@ void deleteAccount(string account)
 	removeFromMaster(account);
 }
 
-void deleteLogEntry(int m,int d,int y, Log)
+void deleteLogEntry(Log userEntry)
 {
-	const string CSH_LOG = Log.GetAccountName() + ".CashLog";
-	vector<string>fields = parseFile(CSH_LOG);
+	const string CSH_LOG = userEntry.getAccountName() + ".CashLog";
 
-	for (int i = 0; i < Log.size(); ++i)
+	vector<string>fields = parseFile(CSH_LOG);
+	vector<Log> log = getEntriesFromFile(CSH_LOG);
+
+	for (int i = 0; i < log.size(); ++i)
 	{
-		if ((Log[i].getMonth() == m) && (Log[i].getDay() == d) && (Log[i].getYear() == y))
+		if ((log[i].getMonth() == userEntry.getMonth()) && (log[i].getDay() == userEntry.getDay()) && (log[i].getYear() == userEntry.getYear))
 		{
-			//found duplicate in log vector
+			//found duplicate in log vector, remove string
+			fields.erase(fields.begin()+i);
+
 			ofstream new_cashlog("templog.txt");
 
 			if (!new_cashlog)
@@ -778,17 +746,14 @@ void deleteLogEntry(int m,int d,int y, Log)
 				cout << "Failed to delete entry\n";
 				return;
 			}
-			
-			vector<string>fields = parseFile(CSH_LOG);
-			if (fields.empty())	//no entries just delete the cashlog file
+
+			if (log.size() == 1) //only the one entry, delete file
 			{
-				if (remove((CSH_LOG).c_str()))
-					cout << "Failed to delete Cash Log File\n";
+				if (remove((CSH_LOG).c_str()) != 0)
+					cout << "Failed to delete entryn";
 				else
-				{
-					cout << "Entry deleted\n";
-					cout << "Cash Log deleted\n";
-				}
+					cout << "File deleted\n";
+
 				return;
 			}
 
@@ -797,15 +762,16 @@ void deleteLogEntry(int m,int d,int y, Log)
 				new_cashlog << fields[i] << endl;
 			}
 
-			//now delete account.cashlog
-			//rename templog.txt to account.cashlog
+			//now delete account.cashlog and replace with templog
 			if (remove((CSH_LOG).c_str()) != 0)
+			{ 
 				cout << "Failed to delete entry\n" << endl;
-			else
-				cout << "Entry deleted\n";
+				return;
+			}
 
 			new_cashlog.close();
 			rename("templog.txt", CSH_LOG.c_str());
+			cout << "Entry deleted\n";
 			return;
 			
 		}
@@ -819,26 +785,7 @@ void menuDeleteByDate(string account)
 	cout << "Enter date as ##/##/#### to delete entry\n";
 	const string CSH_LOG = account + ".CashLog";
 
-	vector<CashLog>Log;
-	int m, d, y;
-	double value;
-
-	//Store entries both from user input and those existing in logfile in cashlog vector
-	vector<string>fields = parseFile(CSH_LOG);
-	for (int i = 0; i < fields.size; ++i)
-	{
-		tuple<int, int, int, double> tupleLog = getLogFromString(fields[i]);
-		m = get<0>(tupleLog);
-		d = get<1>(tupleLog);
-		y = get<2>(tupleLog);
-		value = get<3>(tupleLog);
-
-		Log[i].setValue(value);
-
-
-		Log.push_back(account);
-		Log[i].setDate(int_to_month(m), d, y);
-	}
+	vector<Log>log = getEntriesFromFile(CSH_LOG);
 
 	string st;
 	while (cin >> st)
@@ -846,15 +793,12 @@ void menuDeleteByDate(string account)
 		if (cin.eof())
 			return;
 
-		tuple<int, int, int, double> inputDate = getLogFromString(st);
+		Log userEntry = getEntryFromString(st);
+		userEntry.setAccountName(account);
 
-		m = get<0>(inputDate);
-		d = get<1>(inputDate);
-		y = get<2>(inputDate);
-
-		if (logDateExists(m, d, y, Log))
+		if (logDateExists(userEntry.getDate(), log))
 		{
-			deleteLogEntry(m, d, y, Log);
+			deleteLogEntry(userEntry);
 			return;
 		}
 
@@ -908,7 +852,7 @@ void removeFromMaster(string account)
 
 void writeAccountFile(Account newAccount)
 {
-	ofstream writer(newAccount.getAccountName() + ".txt");
+	ofstream writer(newAccount.getName() + ".txt");
 
 	if (!writer)
 	{
@@ -917,23 +861,23 @@ void writeAccountFile(Account newAccount)
 	}
 
 	//Account Name, Number of Machines, etc
-	writer << newAccount.getAccountName() << "\n" << newAccount.getNumOfMachines() << "\n";
+	writer << newAccount.getName() << "\n" << newAccount.getNumOfMachines() << "\n";
 	writer.close();
-	cout << newAccount.GetAccountName() << " saved\n";
+	cout << newAccount.getName() << " saved\n";
 
-	writeMasterFile(newAccount.getAccountName());
+	writeMasterFile(newAccount.getName());
 
 
 }
 
-void writeLogFile(string account, vector<CashLog>Log)
+void writeLogFile(string account, vector<Log>log)
 {
 	const string CSH_LOG = account + ".CashLog";
 
 	//sort logs by date
-	if (Log.size() > 1)
+	if (log.size() > 1)
 	{
-		sort(Log.begin(), Log.end());
+		sort(log.begin(), log.end());
 	}
 
 	//log file already exists
@@ -949,13 +893,12 @@ void writeLogFile(string account, vector<CashLog>Log)
 		}
 		else
 		{
-			for (int i = 0; i < Log.size(); ++i)
+			for (int i = 0; i < log.size(); ++i)
 			{
-				new_cashlog << Log[i].getDate() << " " << Log[i].getValue() << "\n";
+				new_cashlog << log[i].getDateString() << " " << log[i].getValue() << "\n";
 			}
 
-			//now delete account.cashlog
-			//rename templog.txt to account.cashlog
+			//now delete account.cashlog and replace with temp
 			if (remove((account + ".CashLog").c_str()) != 0)
 			{
 				cout << "Failed to update cashlog file. Aborting without saving...\n" << endl;
@@ -1016,7 +959,7 @@ void writeMasterFile(string accountName)
 			return;
 		}
 
-		masterlist << newAccount.GetAccountName() << "\n";      //now saves in master list as Atherton\nRuthfield\nJohn, etc instead of Atherton.txt
+		masterlist << accountName << "\n";
 		masterlist.close();
 		cout << "Master accounts list saved\n";
 	}
@@ -1029,7 +972,7 @@ void writeMasterFile(string accountName)
 			return;
 		}
 
-		masterlist << newAccount.GetAccountName() << "\n";      //now saves in master list as Atherton\nRuthfield\nJohn, etc instead of Atherton.txt
+		masterlist << accountName << "\n";
 		masterlist.close();
 		cout << "Master accounts list saved\n";
 	}
@@ -1064,7 +1007,7 @@ vector<string> parseFile(string file)
 
 }
 
-tuple<int, int, int, double>getLogFromString(string st)
+Log getEntryFromString(string st)
 {
 	//until change to just date functions will ignore double as they desire
 	double value = 0.0;
@@ -1086,10 +1029,29 @@ tuple<int, int, int, double>getLogFromString(string st)
 	convert << val;		
 	convert >> value;
 
-	int d = atoi(day.c_str());
 	int m = atoi(month.c_str());
+	int d = atoi(day.c_str());
 	int y = atoi(year.c_str());
 
-	return make_tuple(m, d, y, value);
+	Log log;
+	log.setDate(m, d, y); //int_to_month(m)
+	log.setValue(value);
+
+	return log;
 
 }
+
+vector<Log> getEntriesFromFile(string file)
+{
+	vector<Log> log;
+	vector<string>fields = parseFile(file);
+	for (int i = 0; i < fields.size; ++i)
+	{
+		Log entry = getEntryFromString(fields[i]);
+		log.push_back(entry);
+	}
+	return log;
+}
+
+
+
