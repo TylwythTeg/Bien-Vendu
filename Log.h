@@ -7,6 +7,7 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <map>
 
 using namespace std;
 
@@ -71,8 +72,7 @@ private:
 	double value;
 
 };
-/////////////////////////////////////////////////////////////////////////
-//////////////////////
+
 bool cashLogFile(string account)
 {
 	ifstream logfile(account + ".CashLog");
@@ -110,7 +110,7 @@ vector<string> parseFile(string file)
 
 }
 
-Log getEntryFromString(string st)
+Log getLogFromString(string st)
 {
 	//until change to just date functions will ignore double as they desire
 	double value = 0.0;
@@ -144,19 +144,233 @@ Log getEntryFromString(string st)
 
 }
 
-////////////////
 
 
-
-vector<Log> getEntriesFromFile(std::string file)
+vector<Log> getLogsFromFile(std::string file)
 {
 	vector<Log> log;
 	vector<string>fields = parseFile(file);
 	for (int i = 0; i < fields.size(); ++i)
 	{
-		Log entry = getEntryFromString(fields[i]);
+		Log entry = getLogFromString(fields[i]);
 		log.push_back(entry);
 	}
 	return log;
 }
 bool cashLogFile(string account);
+
+bool logDateExists(Date date, vector<Log> log) //check if Date entry exists in vector of Log entries
+{
+
+	for (int i = 0; i < log.size(); ++i)
+	{
+		if ((log[i].getMonth() == date.month) && (log[i].getDay() == date.day) && (log[i].getYear() == date.year))
+			return true;
+	}
+	return false;
+}
+
+void printLogs(string account)
+{
+	vector<string>fields = parseFile(account + ".CashLog");
+
+	for (int i = 0; i < fields.size(); ++i)
+	{
+		cout << "Entry [" << i << "]: " << fields[i] << endl;
+
+	}
+}
+
+//The function parameters should strictly accept two dates and function should be moved to Date.h
+int daysBetween(Log lateLog, Log earlyLog)	//Find amount of days beetween two cash logs
+{
+	int daystosubtract = 0;
+	int totaldays = 0;
+
+	map<string, int>Days;
+	Days["jan"] = 31;
+	Days["feb"] = 28;
+	Days["mar"] = 31;
+	Days["apr"] = 30;
+	Days["may"] = 31;
+	Days["jun"] = 30;
+	Days["jul"] = 31;
+	Days["aug"] = 31;
+	Days["sep"] = 30;
+	Days["oct"] = 31;
+	Days["nov"] = 30;
+	Days["dec"] = 31;
+
+	if ((lateLog.getMonth() == earlyLog.getMonth()) && (lateLog.getYear() == earlyLog.getYear()))
+	{
+		return lateLog.getDay() - earlyLog.getDay();	//mo and day are same so return simple difference of days
+	}
+
+	if (earlyLog.getDay() > lateLog.getDay())	//like if earlylog is 3/8/2016 and latelog is 7/5/2016 (partial month)
+	{
+		daystosubtract = earlyLog.getDay() - lateLog.getDay();	//subtract these days later
+																//will act as if LateLog.GetDay==EarlyLog.GetDay
+	}
+
+	int monthsbetween = lateLog.getMonth() - earlyLog.getMonth();	//4
+	int currentmonth = earlyLog.getMonth();	//gonna go from earlylog to latelog
+
+											//yearsbetween
+	int yearsbetween = lateLog.getYear() - earlyLog.getYear();
+	monthsbetween = monthsbetween + (yearsbetween * 12);
+	//yearsbetween
+
+	string monthstring = monthStringFromInt(currentmonth);
+
+	int currentyear = earlyLog.getYear();
+
+	//Month newmonth;
+
+	for (int i = 0; i <monthsbetween; ++i)
+	{
+		if (i == 0)	//if first month we must subtract days from out starting point
+		{
+			totaldays += (Days[monthstring] - earlyLog.getDay()); //31-8 = 23 total days
+		}
+		if (i != 0)
+		{
+			totaldays += (Days[monthstring]);
+		}
+
+		if ((monthstring == "feb") && leapYear(currentyear))
+			totaldays++;
+
+		monthstring = monthStringFromInt(earlyLog.getMonth() + (i + 1));	//monthstring is now string of month + (iterations+1)															
+
+		if (monthstring == "jan")
+			currentyear++;
+	}
+	//ran through up to beginning of LateLog.GetMonth()
+	totaldays += earlyLog.getDay();
+	//now we have found the days between for perfect months
+
+	//subtract daystosubtract
+	totaldays -= daystosubtract;
+
+	return totaldays;
+}
+
+void analyzeCashLog(string account)
+{
+	//calculate average daily earnings        
+	//and then total average
+
+	vector<Log>log;
+	vector<string>fields = parseFile(account + ".CashLog");
+	vector<double>dailyValue;
+	for (int i = 0; i < fields.size(); ++i)
+	{
+		Log entry = getLogFromString(fields[i]);
+
+		log.push_back(entry);
+
+		cout << "\t" << log[i].getMonth() << "/" << log[i].getDay() << "/" << log[i].getYear() << ": $" << log[i].getValue() << endl;
+
+		///////////Calculate days between and money made per day/////////
+		if (i == 0)		//if first Log entry skip for loop iteration
+		{
+			cout << endl;
+			continue;
+		}
+
+		int daysbetween = daysBetween(log[i], log[i - 1]);
+
+		cout << "\tDays between last log date: " << daysbetween << endl;
+		cout << "\tThe money made per day was " << log[i].getValue() / daysbetween << endl << endl;
+
+		dailyValue.push_back(daysbetween);
+		///////////Calculate days between and money made per day//////////
+	}
+
+	//average daily
+
+	double sum = 0;
+	for (int i = 0; i < dailyValue.size(); ++i)
+		sum += dailyValue[i];
+
+	cout << "The average money made per day is " << sum / dailyValue.size() << endl << endl;
+
+	return;
+}
+
+void writeLogFile(string account, vector<Log>log)
+{
+	const string CSH_LOG = account + ".CashLog";
+
+	//sort logs by date
+	if (log.size() > 1)
+	{
+		sort(log.begin(), log.end());
+	}
+
+	//log file already exists
+	if (cashLogFile(account))
+	{
+		//write to temp, delete account + ".CashLog", rename temp to account + ."CashLog"
+		ofstream new_cashlog("templog.txt");
+
+		if (!new_cashlog)
+		{
+			cout << "Failed to save logfile. Aborting without saving...\n";
+			return;
+		}
+		else
+		{
+			for (int i = 0; i < log.size(); ++i)
+			{
+				new_cashlog << log[i].getDateString() << " " << log[i].getValue() << "\n";
+			}
+
+			//now delete account.cashlog and replace with temp
+			if (remove((account + ".CashLog").c_str()) != 0)
+			{
+				cout << "Failed to update cashlog file. Aborting without saving...\n" << endl;
+				return;
+			}
+			else
+			{
+				new_cashlog.close();
+				rename("templog.txt", CSH_LOG.c_str());
+				cout << "New entries saved\n";
+				return;
+			}
+		}
+
+	}
+
+
+	//logfile doesn't exist
+	ofstream logfile(CSH_LOG);
+
+	if (!logfile)
+	{
+		cout << "Error opening file. Aborting without saving...\n" << endl;
+	}
+	else
+	{
+		for (int i = 0; i < log.size(); ++i)
+		{
+			//save and print
+
+			if (!logfile)
+			{
+				cout << "Error opening file. Aborting without saving...\n" << endl;
+				return;
+			}
+			else
+			{
+				//Account Name, Number of Machines, etc
+				logfile << log[i].getDateString() << " " << log[i].getValue() << "\n";
+				cout << "Entry " << i << ": " << log[i].getDateString() << " " << log[i].getValue() << " saved\n";
+			}
+
+		}
+		cout << "All entries saved...\n";
+		logfile.close();
+	}
+}
