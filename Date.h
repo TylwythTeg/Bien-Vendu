@@ -104,7 +104,7 @@ bool leapYear(int year)
 	return false;
 }
 
-bool isDate(Date date)
+bool isDate(const Date& date)
 {
 
 	switch (date.month)
@@ -160,9 +160,7 @@ int daysBetween(const Date& lateDate, const Date& earlyDate)	//Find amount of da
 	Days["dec"] = 31;
 
 	if ((lateDate.month == earlyDate.month) && (lateDate.year == earlyDate.year))
-	{
 		return lateDate.day - earlyDate.day;	//mo and day are same so return simple difference of days
-	}
 
 	if (earlyDate.day > lateDate.day)	//like if earlylog is 3/8/2016 and latelog is 7/5/2016 (partial month)
 	{
@@ -201,7 +199,7 @@ int daysBetween(const Date& lateDate, const Date& earlyDate)	//Find amount of da
 		monthstring = monthStringFromInt(earlyDate.month + (i + 1));	//monthstring is now string of month + (iterations+1)															
 
 		if (monthstring == "jan")
-			currentyear++;
+			currentyear++;	//this may cause problems if we start out on january
 	}
 	//ran through up to beginning of LateLog.GetMonth()
 	totaldays += earlyDate.day;
