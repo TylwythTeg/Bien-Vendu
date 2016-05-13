@@ -1,11 +1,7 @@
 
 #include "Account.h"
-#include "std_lib_facilities.h"
 #include <iostream>
-#include <cstdlib>
-#include <map>
 #include <vector>
-#include <cstdio>
 
 
 void menuMain();
@@ -237,6 +233,7 @@ void menuCreateCashLog(string account)
 	while (cin >> st >> doub) //terminate?
 	{
 		Log userEntry = getLogFromString(st);
+		userEntry.setValue(doub);
 
 		if (!isDate(userEntry.getDate()))
 		{
@@ -251,7 +248,6 @@ void menuCreateCashLog(string account)
 		else
 		{ 
 			log.push_back(userEntry);
-			log[log.size()-1].setValue(doub);
 		}
 
 	}
