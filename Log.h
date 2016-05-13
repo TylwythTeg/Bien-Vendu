@@ -7,7 +7,6 @@
 #include <fstream>
 #include <vector>
 #include <string>
-#include <map>
 
 using namespace std;
 
@@ -181,80 +180,6 @@ void printLogs(string account)
 	}
 }
 
-//The function parameters should strictly accept two dates and function should be moved to Date.h
-int daysBetween(Log lateLog, Log earlyLog)	//Find amount of days beetween two cash logs
-{
-	int daystosubtract = 0;
-	int totaldays = 0;
-
-	map<string, int>Days;
-	Days["jan"] = 31;
-	Days["feb"] = 28;
-	Days["mar"] = 31;
-	Days["apr"] = 30;
-	Days["may"] = 31;
-	Days["jun"] = 30;
-	Days["jul"] = 31;
-	Days["aug"] = 31;
-	Days["sep"] = 30;
-	Days["oct"] = 31;
-	Days["nov"] = 30;
-	Days["dec"] = 31;
-
-	if ((lateLog.getMonth() == earlyLog.getMonth()) && (lateLog.getYear() == earlyLog.getYear()))
-	{
-		return lateLog.getDay() - earlyLog.getDay();	//mo and day are same so return simple difference of days
-	}
-
-	if (earlyLog.getDay() > lateLog.getDay())	//like if earlylog is 3/8/2016 and latelog is 7/5/2016 (partial month)
-	{
-		daystosubtract = earlyLog.getDay() - lateLog.getDay();	//subtract these days later
-																//will act as if LateLog.GetDay==EarlyLog.GetDay
-	}
-
-	int monthsbetween = lateLog.getMonth() - earlyLog.getMonth();	//4
-	int currentmonth = earlyLog.getMonth();	//gonna go from earlylog to latelog
-
-											//yearsbetween
-	int yearsbetween = lateLog.getYear() - earlyLog.getYear();
-	monthsbetween = monthsbetween + (yearsbetween * 12);
-	//yearsbetween
-
-	string monthstring = monthStringFromInt(currentmonth);
-
-	int currentyear = earlyLog.getYear();
-
-	//Month newmonth;
-
-	for (int i = 0; i <monthsbetween; ++i)
-	{
-		if (i == 0)	//if first month we must subtract days from out starting point
-		{
-			totaldays += (Days[monthstring] - earlyLog.getDay()); //31-8 = 23 total days
-		}
-		if (i != 0)
-		{
-			totaldays += (Days[monthstring]);
-		}
-
-		if ((monthstring == "feb") && leapYear(currentyear))
-			totaldays++;
-
-		monthstring = monthStringFromInt(earlyLog.getMonth() + (i + 1));	//monthstring is now string of month + (iterations+1)															
-
-		if (monthstring == "jan")
-			currentyear++;
-	}
-	//ran through up to beginning of LateLog.GetMonth()
-	totaldays += earlyLog.getDay();
-	//now we have found the days between for perfect months
-
-	//subtract daystosubtract
-	totaldays -= daystosubtract;
-
-	return totaldays;
-}
-
 void analyzeCashLog(string account)
 {
 	//calculate average daily earnings        
@@ -278,7 +203,7 @@ void analyzeCashLog(string account)
 			continue;
 		}
 
-		int daysbetween = daysBetween(log[i], log[i - 1]);
+		int daysbetween = daysBetween(log[i].getDate(), log[i - 1].getDate());
 
 		cout << "\tDays between last log date: " << daysbetween << endl;
 		cout << "\tThe money made per day was " << log[i].getValue() / daysbetween << endl << endl;
