@@ -249,7 +249,10 @@ void menuCreateCashLog(string account)
 			cin.clear();
 		}
 		else
+		{ 
 			log.push_back(userEntry);
+			log[log.size()-1].setValue(doub);
+		}
 
 	}
 
