@@ -2,14 +2,11 @@
 
 
 #include "Log.h"
-#include "std_lib_facilities.h"
 #include <string>
 #include <vector>
 #include <fstream>
-#include <sstream>
 #include <iostream>
 #include <cstdlib>
-#include <map>
 #include <cstdio>
 
 const string MSTR_ACNT_LIST = "Accounts.txt";
@@ -27,8 +24,8 @@ public:
 		if (cashLogFile(name + ".CashLog"))
 			vector<Log> entries = getLogsFromFile(name + ".CashLog");
 	}
-	string getName() { return name; }
-	int getNumOfMachines() { return numOfMachines; }
+	string getName() const { return name; }
+	int getNumOfMachines() const { return numOfMachines; }
 
 	void setNumOfMachines(int n) { numOfMachines = n; }
 
@@ -44,7 +41,7 @@ private:
 
 Account buildAccountFromFile(string file)
 {
-	Vector<string>fields = parseFile(file);
+	vector<string>fields = parseFile(file);
 
 	Account acnt(fields[0]);
 	acnt.setNumOfMachines(atoi(fields[1].c_str()));
@@ -169,7 +166,7 @@ void removeFromMaster(string account)
 	rename("temp.txt", MSTR_ACNT_LIST.c_str());
 }
 
-void writeAccountFile(Account newAccount)
+void writeAccountFile(const Account& newAccount)
 {
 	ofstream writer(newAccount.getName() + ".txt");
 
