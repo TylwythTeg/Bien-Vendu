@@ -85,3 +85,56 @@ struct Date
 	int day;
 	int year;
 };
+
+bool leapYear(int year)
+{
+	if (year % 4 == 0)
+	{
+		if (year % 100 == 0)
+		{
+			if (year % 400 == 0)
+			{
+				return true;
+			}
+			return false;
+		}
+		return true;
+	}
+	return false;
+}
+
+bool isDate(Date date)
+{
+
+	switch (date.month)
+	{
+	case 1:
+	case 3:
+	case 5:
+	case 7:
+	case 8:
+	case 10:
+	case 12:
+		if (date.day >= 1 && date.day <= 31)
+			return true;
+		return false;
+		break;
+	case 4:
+	case 6:
+	case 9:
+	case 11:
+		if (date.day >= 1 && date.day <= 30)
+			return true;
+		return false;
+		break;
+	case 2:
+		if ((date.day <= 28) || (date.day == 29 && leapYear(date.year)))
+			return true;
+		return false;
+		break;
+	default:
+		return false;
+		break;
+	}
+
+}
