@@ -1,12 +1,12 @@
 #pragma once
-//#include "stdafx.h"
+
 #include "Date.h"
-#include "std_lib_facilities.h" //for to_string?
 #include <iostream>
 #include <sstream>
 #include <fstream>
 #include <vector>
 #include <string>
+#include <algorithm>
 
 using namespace std;
 
@@ -19,15 +19,15 @@ public:
 	Log() { accountName = ""; }
 	Log(string str) { accountName = str; }
 
-	string getAccountName() { return accountName; }
-	Date getDate() { return date; }
-	double getValue() { return value; }
+	string getAccountName() const { return accountName; }
+	Date getDate() const { return date; }
+	double getValue() const { return value; }
 
-	int getMonth() { return date.month; }
-	int getDay() { return date.day; }
-	int getYear() { return date.year; }
+	int getMonth() const { return date.month; }
+	int getDay() const { return date.day; }
+	int getYear() const { return date.year; }
 
-	string getDateString()
+	string getDateString() const
 	{
 		int m = date.month;
 		return (std::to_string(m) + "/" + std::to_string(date.day) + "/" + std::to_string(date.year));
@@ -158,7 +158,7 @@ vector<Log> getLogsFromFile(std::string file)
 }
 bool cashLogFile(string account);
 
-bool logDateExists(Date date, vector<Log> log) //check if Date entry exists in vector of Log entries
+bool logDateExists(const Date& date, const vector<Log>& log) //check if Date entry exists in vector of Log entries
 {
 
 	for (int i = 0; i < log.size(); ++i)
@@ -223,7 +223,7 @@ void analyzeCashLog(string account)
 	return;
 }
 
-void writeLogFile(string account, vector<Log>log)
+void writeLogFile(string account, vector<Log>& log) //note, only change of vector is chronological sorting
 {
 	const string CSH_LOG = account + ".CashLog";
 
