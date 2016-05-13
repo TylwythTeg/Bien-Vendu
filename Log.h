@@ -299,3 +299,57 @@ void writeLogFile(string account, vector<Log>log)
 		logfile.close();
 	}
 }
+void deleteLogEntry(Log userEntry)
+{
+	const string CSH_LOG = userEntry.getAccountName() + ".CashLog";
+
+	vector<string>fields = parseFile(CSH_LOG);
+	vector<Log> log = getLogsFromFile(CSH_LOG);
+
+	for (int i = 0; i < log.size(); ++i)
+	{
+		if ((log[i].getMonth() == userEntry.getMonth()) && (log[i].getDay() == userEntry.getDay()) && (log[i].getYear() == userEntry.getYear()))
+		{
+			//found duplicate in log vector, remove string
+			fields.erase(fields.begin() + i);
+
+			ofstream new_cashlog("templog.txt");
+
+			if (!new_cashlog)
+			{
+				cout << "Failed to delete entry\n";
+				return;
+			}
+
+			if (log.size() == 1) //only the one entry, delete file
+			{
+				if (remove((CSH_LOG).c_str()) != 0)
+					cout << "Failed to delete entryn";
+				else
+					cout << "File deleted\n";
+
+				return;
+			}
+
+			for (int i = 0; i < fields.size(); ++i)
+			{
+				new_cashlog << fields[i] << endl;
+			}
+
+			//now delete account.cashlog and replace with templog
+			if (remove((CSH_LOG).c_str()) != 0)
+			{
+				cout << "Failed to delete entry\n" << endl;
+				return;
+			}
+
+			new_cashlog.close();
+			rename("templog.txt", CSH_LOG.c_str());
+			cout << "Entry deleted\n";
+			return;
+
+		}
+	}
+
+
+}
