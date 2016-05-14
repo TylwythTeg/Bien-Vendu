@@ -4,6 +4,8 @@
 #include <cstdlib>
 #include <cstdio>
 
+using namespace std;
+
 Account::Account(string str)
 {
 	name = str;
