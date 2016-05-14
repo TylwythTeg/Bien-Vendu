@@ -2,14 +2,12 @@
 #define Date_H
 
 #include <string>
-using namespace std;
-
 
 enum Month { invalid, jan, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec };
 Month operator++(Month& m);
 Month operator+(Month m, int n);
 Month monthFromInt(int x);
-string monthStringFromInt(int x);
+std::string monthStringFromInt(int x);
 
 struct Date
 {
