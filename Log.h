@@ -6,7 +6,7 @@
 #include <string>
 
 
-using namespace std;
+//using namespace std;
 
 
 #pragma once
@@ -15,9 +15,9 @@ class Log
 {
 public:
 	Log() { accountName = ""; }
-	Log(string str) { accountName = str; }
+	Log(std::string str) { accountName = str; }
 
-	string getAccountName() const { return accountName; }
+	std::string getAccountName() const { return accountName; }
 	Date getDate() const { return date; }
 	double getValue() const { return value; }
 
@@ -25,11 +25,11 @@ public:
 	int getDay() const { return date.day; }
 	int getYear() const { return date.year; }
 
-	string getDateString() const;
+	std::string getDateString() const;
 	void setDate(int m, int d, int y);
 
 	void setValue(double doub) { value = doub; }
-	void setAccountName(string str) { accountName = str; }
+	void setAccountName(std::string str) { accountName = str; }
 
 	friend bool operator<(Log log1, Log log2)
 	{
@@ -55,21 +55,21 @@ public:
 	}
 
 private:
-	string accountName;
+	std::string accountName;
 	Date date;
 	double value;
 
 };
 
-bool cashLogFile(string account);
-vector<string> parseFile(string file);
-Log getLogFromString(string st);
-vector<Log> getLogsFromFile(std::string file);
-bool cashLogFile(string account);
-bool logDateExists(const Date& date, const vector<Log>& log); //check if Date entry exists in vector of Log entries
-void printLogs(string account);
-void analyzeCashLog(string account);
-void writeLogFile(string account, vector<Log>& log); //note, only change of vector is chronological sorting
+bool cashLogFile(std::string account);
+std::vector<std::string> parseFile(std::string file);
+Log getLogFromString(std::string st);
+std::vector<Log> getLogsFromFile(std::string file);
+bool cashLogFile(std::string account);
+bool logDateExists(const Date& date, const std::vector<Log>& log); //check if Date entry exists in vector of Log entries
+void printLogs(std::string account);
+void analyzeCashLog(std::string account);
+void writeLogFile(std::string account, std::vector<Log>& log); //note, only change of vector is chronological sorting
 void deleteLogEntry(Log userEntry);
 
 #endif
