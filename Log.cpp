@@ -5,10 +5,12 @@
 #include <fstream>
 #include <algorithm>
 
+using namespace std;
+
 string Log::getDateString() const
 {
 	int m = date.month;
-	return (std::to_string(m) + "/" + std::to_string(date.day) + "/" + std::to_string(date.year));
+	return (to_string(m) + "/" + to_string(date.day) + "/" + to_string(date.year));
 }
 
 void Log::setDate(int m, int d, int y)
@@ -91,7 +93,7 @@ Log getLogFromString(string st)
 
 
 
-vector<Log> getLogsFromFile(std::string file)
+vector<Log> getLogsFromFile(string file)
 {
 	vector<Log> log;
 	vector<string>fields = parseFile(file);
