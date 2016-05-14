@@ -7,14 +7,14 @@
 #include <vector>
 
 
-using namespace std;
-const string MSTR_ACNT_LIST = "Accounts.txt";
+
+const std::string MSTR_ACNT_LIST = "Accounts.txt";
 
 class Account
 {
 public:
-	Account(string str);
-	string getName() const { return name; }
+	Account(std::string str);
+	std::string getName() const { return name; }
 	int getNumOfMachines() const { return numOfMachines; }
 	void setNumOfMachines(int n) { numOfMachines = n; }
 
@@ -22,20 +22,20 @@ public:
 
 
 private:
-	string name;
+	std::string name;
 	int numOfMachines;
-	vector<Log> entries;
+	std::vector<Log> entries;
 
 };
 
-Account buildAccountFromFile(string file);
+Account buildAccountFromFile(std::string file);
 void printAccounts();
 bool masterFile();
-bool account(string account);
+bool account(std::string account);
 bool accounts();
-void writeMasterFile(string accountName);
-void removeFromMaster(string account);
+void writeMasterFile(std::string accountName);
+void removeFromMaster(std::string account);
 void writeAccountFile(const Account& newAccount);
-void deleteAccount(string account);
+void deleteAccount(std::string account);
 
 #endif
