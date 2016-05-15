@@ -2,6 +2,8 @@
 #include <iostream>
 #include <map>
 
+using namespace std;
+
 Month operator++(Month& m)
 {
 	m = (m == Month::dec) ? Month::jan : Month(int(m) + 1);
