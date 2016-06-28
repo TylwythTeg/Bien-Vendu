@@ -1,7 +1,7 @@
 # Bien-Vendu
 
 Goal:
-To create a program that can manage vending accounts
+To create a program that can manage vending accounts using flat files, coded in C++
 
 Allow user to:
 Create, remove, update, delete and manage accounts at will
